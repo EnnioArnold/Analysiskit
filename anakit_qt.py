@@ -1358,22 +1358,22 @@ def wolfram_subtitle(page: str) -> str:
 # Farben und Schriften
 # ==========================================================================
 
-# Geist-Palette, dieselbe wie in lialkit: Schwarz/Weiss, feine Linien, ein Blau.
+# Swiss Style (claude-design-styles): Schwarz/Weiss, ein Rot, keine Rundungen.
 LIGHT = dict(
-    bg="#ffffff", nav="#fafafa", card="#ffffff", text="#171717", sec="#4d4d4d",
-    ter="#8f8f8f", line="#eaeaea", hair="#f2f2f2", fill="#f2f2f2", fill2="#fafafa",
-    seg="#ffffff", blue="#006bff", blue_hi="#0059ec", blue_soft="#e9f4ff",
-    green="#18794e", green_soft="#e6f4ec", red="#e5484d", red_soft="#fdecec",
+    bg="#ffffff", nav="#ffffff", card="#ffffff", text="#000000", sec="#333333",
+    ter="#666666", line="#000000", hair="#cccccc", fill="#f4f4f4", fill2="#f4f4f4",
+    seg="#ffffff", blue="#000000", blue_hi="#e60000", blue_soft="#f4f4f4",
+    green="#18794e", green_soft="#e6f4ec", red="#e60000", red_soft="#fdecec",
     amber="#ab5200", amber_soft="#fff4e0", flash="#fff3c4",
-    entry="#ffffff", shadow=20, dark=False)
+    entry="#ffffff", shadow=0, dark=False)
 
 DARK = dict(
-    bg="#000000", nav="#0a0a0a", card="#0a0a0a", text="#ededed", sec="#a0a0a0",
-    ter="#7d7d7d", line="#2e2e2e", hair="#1f1f1f", fill="#1a1a1a", fill2="#111111",
-    seg="#282828", blue="#006efe", blue_hi="#3291ff", blue_soft="#06193a",
-    green="#46a758", green_soft="#102a16", red="#e5484d", red_soft="#3a1516",
+    bg="#000000", nav="#000000", card="#000000", text="#ffffff", sec="#cccccc",
+    ter="#888888", line="#ffffff", hair="#333333", fill="#1a1a1a", fill2="#111111",
+    seg="#333333", blue="#e60000", blue_hi="#ff3333", blue_soft="#2a0000",
+    green="#46a758", green_soft="#102a16", red="#ff3333", red_soft="#2a0000",
     amber="#ffb224", amber_soft="#3a2a0a", flash="#3d3210",
-    entry="#0a0a0a", shadow=60, dark=True)
+    entry="#000000", shadow=0, dark=True)
 
 T: dict = dict(LIGHT)
 
@@ -1999,7 +1999,7 @@ class Badge(QLabel):
         pad = "2px 9px" if self.small else "4px 14px"
         self.setStyleSheet(
             f"color: {T[self.fg]}; background: {T[self.bg]};"
-            f"border-radius: {8 if self.small else 11}px; padding: {pad};")
+            f"border-radius: 0px; padding: {pad};")
 
 
 def restyle_labels(root: QWidget):
@@ -2032,7 +2032,7 @@ class Toast(QFrame):
         lay.addWidget(self.label)
         self.setFixedHeight(self.HEIGHT)
         self.setStyleSheet(
-            f"#toast {{ background: {T['card']}; border-radius: {self.HEIGHT // 2}px;"
+            f"#toast {{ background: {T['card']}; border-radius: 0px;"
             f"border: 1px solid {T['line']}; }}")
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(26)
@@ -2283,7 +2283,7 @@ class ResultView(QScrollArea):
         self.message = ("error", message)
         box = QFrame()
         box.setObjectName("errbox")
-        box.setStyleSheet(f"#errbox {{ background: {T['red_soft']}; border-radius: 12px; }}")
+        box.setStyleSheet(f"#errbox {{ background: {T['red_soft']}; border-radius: 0px; }}")
         bl = QVBoxLayout(box)
         bl.setContentsMargins(16, 13, 16, 13)
         bl.setSpacing(4)
@@ -2321,7 +2321,7 @@ class ResultView(QScrollArea):
         for warning in vm.warnings:
             box = QFrame()
             box.setObjectName("warnbox")
-            box.setStyleSheet(f"#warnbox {{ background: {T['amber_soft']}; border-radius: 10px; }}")
+            box.setStyleSheet(f"#warnbox {{ background: {T['amber_soft']}; border-radius: 0px; }}")
             bl = QVBoxLayout(box)
             bl.setContentsMargins(14, 10, 14, 10)
             bl.addWidget(RichLabel(warning, 11, "amber"))
@@ -2337,7 +2337,7 @@ class ResultView(QScrollArea):
     def _step_card(self, step: StepVM) -> QWidget:
         card = QFrame()
         card.setObjectName("stepcard")
-        card.setStyleSheet(f"#stepcard {{ background: {T['fill2']}; border-radius: 14px;"
+        card.setStyleSheet(f"#stepcard {{ background: {T['fill2']}; border-radius: 0px;"
                            f"border: 1px solid {T['hair']}; }}")
         lay = QVBoxLayout(card)
         lay.setContentsMargins(16, 13, 16, 13)
@@ -2364,7 +2364,7 @@ class ResultView(QScrollArea):
     def _result_card(self, highlights: "list[ItemVM]") -> QWidget:
         card = QFrame()
         card.setObjectName("rescard")
-        card.setStyleSheet(f"#rescard {{ background: {T['blue_soft']}; border-radius: 14px; }}")
+        card.setStyleSheet(f"#rescard {{ background: {T['blue_soft']}; border-radius: 0px; }}")
         lay = QVBoxLayout(card)
         lay.setContentsMargins(16, 13, 16, 14)
         lay.setSpacing(6)
@@ -2857,7 +2857,7 @@ class MoviePlayer(QWidget):
         self.screen = QLabel()
         self.screen.setAlignment(Qt.AlignCenter)
         self.screen.setStyleSheet(
-            f"background: {T['fill2']}; border-radius: 12px;")
+            f"background: {T['fill2']}; border-radius: 0px;")
         self.stage.addWidget(self.screen)
 
         self.video = None
@@ -3047,7 +3047,7 @@ class MoviePlayer(QWidget):
 
     def restyle(self):
         self.screen.setStyleSheet(
-            f"background: {T['fill2']}; border-radius: 12px;")
+            f"background: {T['fill2']}; border-radius: 0px;")
         self._paint_video_background()
 
 
@@ -3253,7 +3253,7 @@ class WolframPanel(QWidget):
             box = QFrame()
             box.setObjectName("wolferr" if level == "bad" else "wolfbusy")
             if level == "bad":
-                box.setStyleSheet(f"#wolferr {{ background: {T['red_soft']}; border-radius: 12px; }}")
+                box.setStyleSheet(f"#wolferr {{ background: {T['red_soft']}; border-radius: 0px; }}")
             bl = QVBoxLayout(box)
             bl.setContentsMargins(14, 10, 14, 10)
             bl.addWidget(label(text, 11, color, wrap=True))
@@ -4530,7 +4530,7 @@ class HelpDialog(QDialog):
         for title, example, text in self.SECTIONS:
             box = QFrame()
             box.setObjectName("helpbox")
-            box.setStyleSheet(f"#helpbox {{ background: {T['fill2']}; border-radius: 14px; }}")
+            box.setStyleSheet(f"#helpbox {{ background: {T['fill2']}; border-radius: 0px; }}")
             bl = QVBoxLayout(box)
             bl.setContentsMargins(16, 13, 16, 13)
             bl.setSpacing(4)
@@ -4614,15 +4614,15 @@ class MainWindow(QMainWindow):
         QMainWindow, #page, QStackedWidget {{ background: {T['bg']}; }}
         QScrollArea {{ background: transparent; }}
         #nav {{ background: {T['nav']}; }}
-        #card {{ background: {T['card']}; border-radius: 20px;
+        #card {{ background: {T['card']}; border-radius: 0px;
                  border: {'0px' if T['dark'] else '1px'} solid {T['hair']}; }}
         QPushButton#primary {{ background: {T['blue']}; color: #ffffff;
-            border: none; border-radius: 19px; padding: 0 22px; }}
+            border: none; border-radius: 0px; padding: 0 22px; }}
         QPushButton#primary:hover {{ background: {T['blue_hi']}; }}
         QPushButton#primary:disabled {{ background: {T['fill']};
             color: {T['ter']}; }}
         QPushButton#secondary {{ background: {T['fill']}; color: {T['text']};
-            border: none; border-radius: 15px; padding: 0 18px; }}
+            border: none; border-radius: 0px; padding: 0 18px; }}
         QPushButton#secondary:hover {{ background: {T['line']}; }}
         QPushButton#secondary:disabled {{ color: {T['ter']}; }}
         QPushButton#plain {{ background: transparent; color: {T['blue']};
@@ -4630,34 +4630,34 @@ class MainWindow(QMainWindow):
         QPushButton#plain:hover {{ text-decoration: underline; }}
         QPushButton#plain:disabled {{ color: {T['ter']}; }}
         QPushButton#dropdown {{ background: {T['fill']}; color: {T['text']};
-            border: none; border-radius: 9px; padding: 0 10px; text-align: left; }}
+            border: none; border-radius: 0px; padding: 0 10px; text-align: left; }}
         QPushButton#dropdown:hover {{ background: {T['line']}; }}
         QPushButton#dropdown:disabled {{ color: {T['ter']}; }}
         QLineEdit#cell {{ background: {T['entry']}; color: {T['text']};
-            border: 1px solid {T['line']}; border-radius: 11px; padding: 0 10px;
+            border: 1px solid {T['line']}; border-radius: 0px; padding: 0 10px;
             selection-background-color: {T['blue']}; }}
         QLineEdit#cell:focus {{ border: 2px solid {T['blue']}; }}
         QMenu {{ background: {T['card']}; color: {T['text']};
-            border: 1px solid {T['line']}; border-radius: 10px; padding: 5px; }}
-        QMenu::item {{ padding: 6px 22px; border-radius: 6px; }}
+            border: 1px solid {T['line']}; border-radius: 0px; padding: 5px; }}
+        QMenu::item {{ padding: 6px 22px; border-radius: 0px; }}
         QMenu::item:selected {{ background: {T['blue']}; color: #ffffff; }}
         QMenu::separator {{ height: 1px; background: {T['line']}; margin: 4px 8px; }}
         QToolTip {{ background: {T['card']}; color: {T['text']};
             border: 1px solid {T['line']}; padding: 4px 8px; }}
         QScrollBar:vertical {{ background: transparent; width: 12px; margin: 2px; }}
         QScrollBar::handle:vertical {{ background: {T['line']};
-            border-radius: 5px; min-height: 40px; }}
+            border-radius: 0px; min-height: 40px; }}
         QScrollBar::handle:vertical:hover {{ background: {T['ter']}; }}
         QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
         QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
         QScrollBar:horizontal {{ background: transparent; height: 12px; margin: 2px; }}
         QScrollBar::handle:horizontal {{ background: {T['line']};
-            border-radius: 5px; min-width: 40px; }}
+            border-radius: 0px; min-width: 40px; }}
         QDialog {{ background: {T['card']}; }}
         QProgressBar#progress {{ background: {T['fill']}; border: none;
-            border-radius: 3px; }}
+            border-radius: 0px; }}
         QProgressBar#progress::chunk {{ background: {T['blue']};
-            border-radius: 3px; }}
+            border-radius: 0px; }}
         """
         self.setStyleSheet(sheet)
         self.hairline.setStyleSheet(f"background: {T['line']};")
