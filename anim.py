@@ -794,8 +794,15 @@ def _build_scenes():
 #: Manim sucht Szenenklassen nur in diesem Modul, darum wird __module__
 #: der hier erzeugten Klassen umgehängt.
 _RUNNER = '''
-import importlib, sys
-sys.path.insert(0, {root!r})
+import importlib, importlib.util, os, sys
+# Der Ordner ist das Paket, auch wenn er nicht so heisst (z. B. »Analysiskit«).
+if {pkg!r} not in sys.modules:
+    _spec = importlib.util.spec_from_file_location(
+        {pkg!r}, os.path.join({here!r}, "__init__.py"),
+        submodule_search_locations=[{here!r}])
+    _p = importlib.util.module_from_spec(_spec)
+    sys.modules[{pkg!r}] = _p
+    _spec.loader.exec_module(_p)
 _mod = importlib.import_module({pkg!r} + ".anim")
 
 for _key, _cls in _mod._build_scenes().items():
@@ -833,7 +840,7 @@ def render(job: AnimationJob, *, progress: Callable[[int, str], None] | None = N
     work = Path(out_dir) if out_dir else Path(tempfile.mkdtemp(prefix="anakit-anim-"))
     work.mkdir(parents=True, exist_ok=True)
     script = work / "scene_runner.py"
-    script.write_text(_RUNNER.format(root=root, pkg=pkg), encoding="utf-8")
+    script.write_text(_RUNNER.format(here=str(Path(__file__).resolve().parent), pkg=pkg), encoding="utf-8")
 
     folder, flag = QUALITIES.get(QUALITY_ALIASES.get(job.quality, job.quality),
                                  QUALITIES["low"])
