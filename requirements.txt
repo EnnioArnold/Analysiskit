@@ -1,0 +1,7 @@
+sympy
+numpy
+matplotlib
+plotly
+PySide6
+# Animationen sind freiwillig (braucht zusätzlich: brew install cairo pango pkg-config ffmpeg)
+# manim
