@@ -56,12 +56,14 @@ QUALITIES = {
 #: Auch die Auflösung selbst ist als Name erlaubt: quality="1080p60".
 QUALITY_ALIASES = {v[0]: k for k, v in QUALITIES.items()}
 
-SCENES = ("secant_to_tangent", "derivative_graph", "curve_analysis")
+SCENES = ("secant_to_tangent", "derivative_graph", "curve_analysis", "limit_approach")
 SCENE_NAMES = {"secant_to_tangent": "SecantToTangentScene",
                "derivative_graph": "DerivativeGraphScene",
-               "curve_analysis": "CurveAnalysisScene"}
+               "curve_analysis": "CurveAnalysisScene",
+               "limit_approach": "LimitApproachScene"}
 #: Ungefähre Zahl der Teilanimationen, für den Fortschrittsbalken.
-_EXPECTED = {"secant_to_tangent": 14, "derivative_graph": 12, "curve_analysis": 18}
+_EXPECTED = {"secant_to_tangent": 14, "derivative_graph": 12, "curve_analysis": 18,
+             "limit_approach": 12}
 
 
 @dataclass
@@ -98,11 +100,11 @@ class AnimationJob:
     """
     Ein Rendering-Auftrag.
 
-    scene   — 'secant_to_tangent' | 'derivative_graph' | 'curve_analysis'
+    scene   — 'secant_to_tangent' | 'derivative_graph' | 'curve_analysis' | 'limit_approach'
     f       — die Funktion als Text (SymPy-Schreibweise, z. B. 'x**2' oder
               'x^2 if x<1 else x-1')
-    x0      — Stelle der Tangente (nur secant_to_tangent)
-    hs      — die Abstände h, nacheinander (nur secant_to_tangent)
+    x0      — Stelle der Tangente bzw. des Grenzwerts (secant_to_tangent, limit_approach)
+    hs      — die Abstände h, nacheinander (secant_to_tangent, limit_approach)
     xlim/ylim — Ausschnitt; None heisst automatisch
     fmt     — 'mp4' oder 'gif'
     """
@@ -170,15 +172,15 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
     text = _f_text(f)
     xl = _xlim(xlim, None)
     x0v = None
-    if scene == "secant_to_tangent":
+    if scene in ("secant_to_tangent", "limit_approach"):
         if x0 is None:
-            raise ValueError("Für secant_to_tangent braucht es x0, die Stelle der Tangente.")
+            raise ValueError(f"Für {scene} braucht es x0, die Stelle.")
         x0v = _xval(x0, "x0")[0]
         if xl is None:
             xl = (x0v - 3.0, x0v + 3.0)
     hlist = [float(v) for v in (hs if hs is not None else (2, 1, 0.5, 0.25, 0.1))
              if float(v) != 0.0]
-    if scene == "secant_to_tangent" and not hlist:
+    if scene in ("secant_to_tangent", "limit_approach") and not hlist:
         raise ValueError("hs braucht mindestens einen Wert ungleich 0")
     if scene == "secant_to_tangent":
         fn = _Fn(text)
@@ -781,9 +783,104 @@ def _build_scenes():
             self.play(FadeIn(summary, shift=LEFT * 0.2), run_time=1.0)
             self.wait(2.2)
 
+    # ======================================================================
+    class LimitApproachScene(AnaScene):
+        """Grenzwert: x nähert sich x0 von links und von rechts, f(x) läuft mit."""
+
+        def construct(self):
+            th, job, fn = self.th, self.job, self.fn
+            x0 = float(job.x0)
+            lo, hi = self.xlim
+            scan = _scan(fn, lo, hi)
+            hs = sorted(set(abs(h) for h in job.hs), reverse=True)
+            ys = [self.safe(fn, x0 + sg * h) for h in hs for sg in (-1, 1)]
+            ylim = tuple(job.ylim) if job.ylim else _auto_ylim(
+                scan, include=[v for v in ys if v is not None])
+            fr = Frame((lo, hi), ylim, 8.2, 5.0, (-2.45, -0.25), trig=fn.trig, font=self.font)
+            title = self.headline(job.title or "Der Grenzwert: x nähert sich x₀")
+
+            self.play(Write(title), FadeIn(fr.axes(th)), run_time=1.4)
+            graph, _ = self.graph(fr, fn, th.accent, scan)
+            flab = self.T("f", 28, th.accent).move_to(fr.p(lo, ylim[1]) + RIGHT * 0.5 + DOWN * 0.3)
+            self.play(Create(graph), FadeIn(flab), run_time=2.0)
+
+            vline = DashedLine(fr.p(x0, ylim[0]), fr.p(x0, ylim[1]), dash_length=0.12,
+                               color=th.muted, stroke_width=2.5)
+            x0lab = self.T("x₀", 24, th.muted).next_to(fr.p(x0, ylim[0]), DOWN, buff=0.45)
+            self.play(Create(vline), FadeIn(x0lab), run_time=0.8)
+            self.say("Wir nähern uns der Stelle x₀ — von links und von rechts.", wait=0.6)
+
+            h = ValueTracker(hs[0])
+            side_color = {-1: th.secant, 1: th.tangent}
+
+            def probe(sg):
+                def build():
+                    hv = h.get_value()
+                    y = self.safe(fn, x0 + sg * hv)
+                    if y is None or not fr.inside(x0 + sg * hv, y):
+                        return VGroup()
+                    p = fr.p(x0 + sg * hv, y)
+                    foot = fr.p(x0 + sg * hv, ylim[0])
+                    return VGroup(DashedLine(foot, p, dash_length=0.1, color=side_color[sg],
+                                             stroke_width=2.5),
+                                  self.dot(p, side_color[sg], 0.1))
+                return always_redraw(build)
+
+            left, right = probe(-1), probe(1)
+            self.play(FadeIn(left), FadeIn(right), run_time=0.8)
+
+            panel = RIGHT * 4.85
+            head = self.T("x → x₀", 24, th.muted).move_to(panel + UP * 2.6)
+            self.play(FadeIn(head), run_time=0.4)
+            rows = VGroup()
+            table_left = np.array([2.75, 2.0, 0.0])
+
+            def add_row(hv):
+                fl, fr_ = self.safe(fn, x0 - hv), self.safe(fn, x0 + hv)
+                a = "—" if fl is None else _num(fl, 4)
+                b = "—" if fr_ is None else _num(fr_, 4)
+                r = self.T(f"h = {_num(hv, 3)}:  {a}  |  {b}", 21)
+                rows.add(r)
+                rows.arrange(DOWN, aligned_edge=LEFT, buff=0.2)
+                rows.align_to(table_left, LEFT).align_to(table_left, UP)
+                return r
+
+            sub = self.T("links  |  rechts", 18, th.muted).move_to(panel + UP * 2.25)
+            self.play(FadeIn(sub), FadeIn(add_row(hs[0])), run_time=0.5)
+            self.say("Jetzt wird der Abstand h zu x₀ immer kleiner …", wait=0.3)
+            for hv in hs[1:]:
+                self.play(h.animate.set_value(hv), run_time=1.5, rate_func=smooth)
+                r = add_row(hv)
+                self.play(FadeIn(r), run_time=0.4)
+                self.wait(0.3)
+
+            tiny = hs[-1] / 20.0
+            lv, rv = self.safe(fn, x0 - tiny), self.safe(fn, x0 + tiny)
+            big = lambda v: v is None or abs(v) > 1e4
+            if big(lv) or big(rv):
+                text, col = "Die Funktionswerte wachsen über alle Grenzen: kein endlicher Grenzwert.", th.bad
+            elif abs(lv - rv) > 1e-2 * max(1.0, abs(lv), abs(rv)):
+                text, col = (f"Links {_num(lv, 3)}, rechts {_num(rv, 3)}: "
+                             "die Seiten stimmen nicht überein, kein Grenzwert."), th.bad
+            else:
+                L = (lv + rv) / 2
+                text, col = f"Beide Seiten laufen gegen L = {_num(L, 3)}.", th.good
+                if fr.inside(x0, L):
+                    hline = DashedLine(fr.p(lo, L), fr.p(hi, L), dash_length=0.12,
+                                       color=th.good, stroke_width=3)
+                    self.play(h.animate.set_value(tiny), run_time=1.2, rate_func=smooth)
+                    self.play(Create(hline), run_time=0.8)
+                    self.play(Indicate(self.hollow(fr.p(x0, L), th.good), color=th.good),
+                              run_time=0.8)
+            if col is th.bad:
+                self.play(h.animate.set_value(tiny), run_time=1.2, rate_func=smooth)
+            self.say(text, 24, col, wait=0.8)
+            self.wait(1.5)
+
     return {"secant_to_tangent": SecantToTangentScene,
             "derivative_graph": DerivativeGraphScene,
-            "curve_analysis": CurveAnalysisScene}
+            "curve_analysis": CurveAnalysisScene,
+            "limit_approach": LimitApproachScene}
 
 
 # --------------------------------------------------------------------------
@@ -865,7 +962,7 @@ def render(job: AnimationJob, *, progress: Callable[[int, str], None] | None = N
     # Manim zählt je Animation von 0 bis 100. Für einen Balken, der nicht
     # zurückspringt, zählen wir die abgeschlossenen Animationen mit.
     expected = _EXPECTED.get(job.scene, 12) + (
-        2 * len(job.hs) if job.scene == "secant_to_tangent" else 0)
+        2 * len(job.hs) if job.scene in ("secant_to_tangent", "limit_approach") else 0)
     log: list[str] = []
     done = last = 0
     timed_out = threading.Event()

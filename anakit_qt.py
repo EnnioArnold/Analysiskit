@@ -2713,7 +2713,7 @@ ANIM_INSTALL_HINT = ("brew install cairo pango pkg-config ffmpeg\n"
 #: Die Szenen je Seite: Name im Auswahlfeld -> Schlüssel für anim.py.
 ANIM_SCENES = {
     "steigung": {"Sekante → Tangente": "secant_to_tangent"},
-    "limits": {"keine Animation": ""},
+    "limits": {"x nähert sich x₀": "limit_approach"},
     "derivative": {"f und f′": "derivative_graph"},
     "curve": {"Kurvendiskussion": "curve_analysis"},
 }
@@ -3597,7 +3597,9 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     if not text:
         return "Ohne Funktion gibt es nichts zu animieren."
     kw = {}
-    if scene == "secant_to_tangent":
+    if page == "limits" and p.get("action") not in ("limit", "table", "cont"):
+        return "Für diese Aufgabe gibt es keine Animation — wähle einen Grenzwert."
+    if scene in ("secant_to_tangent", "limit_approach"):
         try:
             x0 = read_number(p.get("x0") or p.get("x1") or "", "die Stelle x₀")
             kw["x0"] = float(x0)
