@@ -1358,21 +1358,22 @@ def wolfram_subtitle(page: str) -> str:
 # Farben und Schriften
 # ==========================================================================
 
+# Geist-Palette, dieselbe wie in lialkit: Schwarz/Weiss, feine Linien, ein Blau.
 LIGHT = dict(
-    bg="#f5f5f7", nav="#fbfbfd", card="#ffffff", text="#1d1d1f", sec="#6e6e73",
-    ter="#86868b", line="#d2d2d7", hair="#ededf0", fill="#eaeaef", fill2="#f5f5f7",
-    seg="#ffffff", blue="#0071e3", blue_hi="#2b93ff", blue_soft="#e3effc",
-    green="#1d8a3c", green_soft="#e2f5e8", red="#d70015", red_soft="#fceceb",
-    amber="#a86400", amber_soft="#fdf3d8", flash="#fdeab0",
-    entry="#ffffff", shadow=40, dark=False)
+    bg="#ffffff", nav="#fafafa", card="#ffffff", text="#171717", sec="#4d4d4d",
+    ter="#8f8f8f", line="#eaeaea", hair="#f2f2f2", fill="#f2f2f2", fill2="#fafafa",
+    seg="#ffffff", blue="#006bff", blue_hi="#0059ec", blue_soft="#e9f4ff",
+    green="#18794e", green_soft="#e6f4ec", red="#e5484d", red_soft="#fdecec",
+    amber="#ab5200", amber_soft="#fff4e0", flash="#fff3c4",
+    entry="#ffffff", shadow=20, dark=False)
 
 DARK = dict(
-    bg="#000000", nav="#161617", card="#1c1c1e", text="#f5f5f7", sec="#a1a1a6",
-    ter="#8e8e93", line="#3a3a3c", hair="#2c2c2e", fill="#2c2c2e", fill2="#232325",
-    seg="#5a5a5e", blue="#0a84ff", blue_hi="#3b9dff", blue_soft="#16324f",
-    green="#30d158", green_soft="#15331c", red="#ff453a", red_soft="#3a1c1a",
-    amber="#ffd60a", amber_soft="#3a3113", flash="#4a3f16",
-    entry="#242426", shadow=120, dark=True)
+    bg="#000000", nav="#0a0a0a", card="#0a0a0a", text="#ededed", sec="#a0a0a0",
+    ter="#7d7d7d", line="#2e2e2e", hair="#1f1f1f", fill="#1a1a1a", fill2="#111111",
+    seg="#282828", blue="#006efe", blue_hi="#3291ff", blue_soft="#06193a",
+    green="#46a758", green_soft="#102a16", red="#e5484d", red_soft="#3a1516",
+    amber="#ffb224", amber_soft="#3a2a0a", flash="#3d3210",
+    entry="#0a0a0a", shadow=60, dark=True)
 
 T: dict = dict(LIGHT)
 
@@ -1387,10 +1388,10 @@ def pick_font(candidates: Sequence[str], fallback: str) -> str:
 
 class Fonts:
     def __init__(self):
-        ui = pick_font(["SF Pro Text", ".AppleSystemUIFont", "Helvetica Neue",
+        ui = pick_font(["Geist", "Inter", "SF Pro Text", ".AppleSystemUIFont", "Helvetica Neue",
                         "Segoe UI Variable Text", "Segoe UI", "Inter",
                         "DejaVu Sans"], "Sans Serif")
-        display = pick_font(["SF Pro Display", "SF Pro Text", "Helvetica Neue",
+        display = pick_font(["Geist", "Inter", "SF Pro Display", "SF Pro Text", "Helvetica Neue",
                              "Segoe UI Variable Display", "Segoe UI", "Inter",
                              "DejaVu Sans"], ui)
         mono = pick_font(["SF Mono", "Menlo", "Cascadia Mono", "Consolas",
