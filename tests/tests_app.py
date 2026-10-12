@@ -179,5 +179,22 @@ job = A.anim_job_for("steigung", {"f": "x^2", "method": "tan", "x0": "1"}, objec
                      "secant_to_tangent", "medium") if A.ak_anim else None
 check(job is None or hasattr(job, "scene") or isinstance(job, str))
 
+# Zeichnung: Mausrad zoomt, Doppelklick setzt zurück, Hover zeigt Koordinaten
+import matplotlib.pyplot as plt
+from types import SimpleNamespace as NS
+pc = A.PlotCanvas()
+fig, ax_ = plt.subplots()
+xs_ = [i / 10 for i in range(-50, 51)]
+ax_.plot(xs_, [x * x for x in xs_])
+pc.show_figure(fig)
+xl0 = ax_.get_xlim()
+pc._on_scroll(NS(inaxes=ax_, xdata=0.0, ydata=0.0, step=1))
+check(ax_.get_xlim()[1] - ax_.get_xlim()[0] < xl0[1] - xl0[0], "Zoom")
+pc._on_press(NS(inaxes=ax_, button=1, dblclick=True, x=0, y=0))
+check(tuple(ax_.get_xlim()) == tuple(xl0), "Reset")
+pc._on_move(NS(inaxes=ax_, xdata=2.0, ydata=0.0, x=0, y=0))
+check("Kurve: 4.000" in pc.readout.text(), pc.readout.text())
+pc.clear()
+
 win.close()
 print(f"tests_app: {N['ok']} Prüfungen ok. Bilder in {SHOTS}")
