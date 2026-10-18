@@ -21,7 +21,7 @@ Installation:
     pip install PySide6 matplotlib sympy numpy        # plotly, manimgx freiwillig
 
 Start (aus dem Ordner heraus, egal wie er heisst):
-    python3 anakit_qt.py
+    python3 app/anakit_qt.py
 """
 
 from __future__ import annotations
@@ -66,9 +66,9 @@ from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QFrame,
                                QStackedWidget, QVBoxLayout, QWidget)
 
 # Dieser Ordner ist selbst das Paket `anakit` — auch dann, wenn er nach dem
-# GitHub-Download »anakit-main« heisst oder man direkt `python3 anakit_qt.py`
-# darin aufruft. Darum hier von Hand als Paket anmelden, vor allen Importen.
-_HERE = os.path.dirname(os.path.abspath(__file__))
+# GitHub-Download »anakit-main« heisst oder man `python3 app/anakit_qt.py`
+# aufruft. Darum hier von Hand als Paket anmelden, vor allen Importen.
+_HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if "anakit" not in sys.modules:
     import importlib.util as _ilu
     _spec = _ilu.spec_from_file_location(

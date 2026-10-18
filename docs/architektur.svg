@@ -38,7 +38,7 @@
 
   <rect x="40" y="162" width="170" height="56" rx="6" fill="#f5f5f5" stroke="#2d3142" stroke-width="1"/>
   <text class="n" x="56" y="186">Fenster</text>
-  <text class="s" x="56" y="204">anakit_qt.py</text>
+  <text class="s" x="56" y="204">app/anakit_qt.py</text>
 
   <!-- Kern, der eine Fokuspunkt -->
   <rect x="290" y="100" width="190" height="100" rx="6" fill="#bf4520" fill-opacity="0.08" stroke="#bf4520" stroke-width="1.4"/>
