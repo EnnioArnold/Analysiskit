@@ -1054,6 +1054,7 @@ def to_gif(video: Path, target: Path, *, width: int = 760, fps: int = 15) -> Pat
     """
     if shutil.which("ffmpeg") is None:
         raise RuntimeError("ffmpeg fehlt — nötig für die GIF-Ausgabe.")
+    width, fps = int(width), int(fps)   # kommen aus ANAKIT_JOB/JSON und landen im ffmpeg-Filter
     chain = (f"fps={fps},scale='min({width},iw)':-1:flags=lanczos,"
              f"split[s0][s1];[s0]palettegen=stats_mode=diff[p];"
              f"[s1][p]paletteuse=dither=bayer:bayer_scale=3")
