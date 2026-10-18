@@ -310,7 +310,7 @@ class TestAnim(unittest.TestCase):
         self.assertEqual(back, job)
         job = anim.build_job("curve_analysis", "x^2 if x<1 else x-1", dark=True)
         self.assertEqual(anim.AnimationJob.from_json(job.to_json()).f, "x^2 if x<1 else x-1")
-        self.assertEqual(job.theme.background, "#1c1c1e")
+        self.assertEqual(job.theme.background, "#000000")
         job = anim.build_job("derivative_graph", lambda t: t ** 3)
         self.assertIn("x**3", job.f)
 
