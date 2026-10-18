@@ -11,9 +11,12 @@ kommt dazu:
 
 ```bash
 pip install -r requirements.txt      # sympy, numpy, matplotlib, plotly, PySide6
-brew install cairo pango pkg-config ffmpeg   # Unterbau für Manim
-pip install manim                    # Animationen, freiwillig
+pip install manimgx                  # Animationen, freiwillig (Python 3.13+)
 ```
+
+manimgx rendert auf der GPU und schreibt das MP4 ohne ffmpeg. Als Rückfall
+geht Manim CE (`brew install cairo pango pkg-config ffmpeg`, `pip install manim`).
+Die Videos kommen im Swiss-Design: Schwarz/Weiss mit rotem Akzent.
 
 Der Ordner `anakit/` liegt neben deinen Wochen-Ordnern. Aus einem
 Notebook in `Week 3/` heraus:
@@ -92,7 +95,7 @@ Vier Seiten: **Steigung & Tangente**, **Grenzwerte**, **Ableiten**,
 **Animation**. Die Prüfung über Wolfram|Alpha gibt es auf jeder Seite.
 
 Die Zeichnungen (`plot_*`) sind matplotlib-Figuren, `dark=True` schaltet den
-Dunkelmodus ein, `plotly_function` öffnet sie interaktiv. Manim rendert drei
+Dunkelmodus ein, `plotly_function` öffnet sie interaktiv. Die Animationen sind drei
 Szenen: Sekante wird zur Tangente, Entstehung des Graphen von f′ und die
 Kurvenanalyse (`anakit.anim`).
 

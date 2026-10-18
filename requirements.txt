@@ -3,5 +3,5 @@ numpy
 matplotlib
 plotly
 PySide6
-# Animationen sind freiwillig (braucht zusätzlich: brew install cairo pango pkg-config ffmpeg)
-# manim
+# Animationen sind freiwillig (Python 3.13+); Rückfall: manim + ffmpeg
+# manimgx
