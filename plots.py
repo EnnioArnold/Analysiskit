@@ -39,21 +39,21 @@ __all__ = [
     "has_plotly", "plotly_function", "save_html", "COLORS",
 ]
 
-# Dieselbe Farbfolge wie in lialkit, damit die Hefte zusammengehören.
-COLORS = ["#0071e3", "#ff9500", "#248a3d", "#d70015", "#8944ab", "#00a2a8"]
+# Swiss Style wie die App: Schwarz/Weiss, ein Rot, Grautöne für Nebenlinien.
+COLORS = ["#000000", "#666666", "#999999", "#e60000", "#e60000", "#888888"]
 
 _LIGHT = dict(
-    dark=False, bg="#ffffff", fg="#1d1d1f", muted="#86868b", grid="#e5e5ea",
-    spine="#d2d2d7", axis="#6e6e73",
-    f="#0071e3", d1="#8944ab", d2="#00a2a8", sec="#ff9500", sec2="#b34700",
-    tan="#d70015", pt="#248a3d", pos="#248a3d", neg="#d70015",
-    hi="#ff9500", lo="#8944ab", sat="#00a2a8", wen="#c9a000")
+    dark=False, bg="#ffffff", fg="#000000", muted="#666666", grid="#e0e0e0",
+    spine="#000000", axis="#333333",
+    f="#000000", d1="#e60000", d2="#888888", sec="#666666", sec2="#333333",
+    tan="#e60000", pt="#000000", pos="#000000", neg="#e60000",
+    hi="#e60000", lo="#000000", sat="#888888", wen="#666666")
 _DARK = dict(
-    dark=True, bg="#1c1c1e", fg="#f5f5f7", muted="#8e8e93", grid="#2f2f32",
-    spine="#48484a", axis="#a1a1a6",
-    f="#0a84ff", d1="#bf5af2", d2="#40c8e0", sec="#ff9f0a", sec2="#ff6a1a",
-    tan="#ff453a", pt="#30d158", pos="#30d158", neg="#ff453a",
-    hi="#ff9f0a", lo="#bf5af2", sat="#40c8e0", wen="#ffd60a")
+    dark=True, bg="#000000", fg="#ffffff", muted="#999999", grid="#2a2a2a",
+    spine="#ffffff", axis="#cccccc",
+    f="#ffffff", d1="#ff3333", d2="#999999", sec="#aaaaaa", sec2="#dddddd",
+    tan="#ff3333", pt="#ffffff", pos="#ffffff", neg="#ff3333",
+    hi="#ff3333", lo="#ffffff", sat="#999999", wen="#aaaaaa")
 
 
 def _theme(dark: bool) -> dict:
@@ -1504,7 +1504,7 @@ def plotly_function(f, xlim=(-5, 5), with_derivatives=True):
                       row=r, col=1)
         ox = [e.x for e in sc.events if e.pole and abs(e.x) > 1e-9]
         for px in ox:
-            fig.add_vline(x=px, line=dict(color="#86868b", width=1, dash="dash"),
+            fig.add_vline(x=px, line=dict(color="#666666", width=1, dash="dash"),
                           row=r, col=1)
         for e in sc.events:
             for state, v in ((e.ls, e.lv), (e.rs, e.rv)):
@@ -1518,9 +1518,9 @@ def plotly_function(f, xlim=(-5, 5), with_derivatives=True):
                     hovertemplate=f"x = {e.x:.4g}<br>Grenzwert = {v:.4g}<extra></extra>"),
                     row=r, col=1)
         fig.update_yaxes(range=list(yl), row=r, col=1, zeroline=True,
-                         zerolinecolor="#86868b", gridcolor="#e5e5ea")
-    fig.update_xaxes(range=[lo, hi], zeroline=True, zerolinecolor="#86868b",
-                     gridcolor="#e5e5ea", showspikes=True, spikemode="across",
+                         zerolinecolor="#666666", gridcolor="#e0e0e0")
+    fig.update_xaxes(range=[lo, hi], zeroline=True, zerolinecolor="#666666",
+                     gridcolor="#e0e0e0", showspikes=True, spikemode="across",
                      spikethickness=1)
     fig.update_xaxes(title_text="x", row=rows, col=1)
     fig.update_layout(template="plotly_white", height=320 + 230 * rows - 230 * (rows == 1) * 0,
