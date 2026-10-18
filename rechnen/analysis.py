@@ -832,7 +832,7 @@ def _as_analysis(f, domain=None) -> _Analysis:
 class _Figure:
     def figure(self, xlim=None, dark: bool = False, **kwargs):
         """f, f' und f'' untereinander (Monotonie-/Krümmungsfärbung, kritische Punkte)."""
-        from . import plots
+        from ..grafik import plots
         a = self._a
         return plots.plot_curve(a.f, xlim if xlim is not None else a.default_xlim(),
                                 dark=dark, **kwargs)

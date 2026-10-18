@@ -664,7 +664,7 @@ class DerivativeResult(Result):
         self.title = "Ableitung" if order == 1 else f"{order}. Ableitung"
 
     def figure(self, xlim=None, dark=False, **kwargs):
-        from .plots import plot_derivative
+        from ..grafik.plots import plot_derivative
         return plot_derivative(self.f, xlim=xlim, dark=dark)
 
     def __call__(self, value):
@@ -854,7 +854,7 @@ class RuleResult(Result):
         self.verified = True
 
     def figure(self, xlim=None, dark=False, **kwargs):
-        from .plots import plot_derivative
+        from ..grafik.plots import plot_derivative
         return plot_derivative(self.whole, xlim=xlim, dark=dark)
 
 
