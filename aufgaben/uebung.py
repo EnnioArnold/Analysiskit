@@ -45,10 +45,10 @@ from typing import Callable
 
 import sympy as sp
 
-from .core import parse, x
-from .derivative import diff
-from .analysis import extrema
-from .render import Result
+from ..rechnen.core import parse, x
+from ..rechnen.derivative import diff
+from ..rechnen.analysis import extrema
+from ..rechnen.render import Result
 
 __all__ = ["pruefe_ableitung", "vorlage_ableitung", "pruefe_extrema",
            "vorlage_extrema", "vergleiche_mit_anakit", "Pruefung",

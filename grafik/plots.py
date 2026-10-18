@@ -31,7 +31,7 @@ from typing import Callable, Sequence
 import numpy as np
 import sympy as sp
 
-from .core import fmt, parse, to_callable, x as X_SYMBOL
+from ..rechnen.core import fmt, parse, to_callable, x as X_SYMBOL
 
 __all__ = [
     "plot_function", "plot_secant", "plot_secants_to_tangent", "plot_tangent",

@@ -501,7 +501,7 @@ class LimitResult(Result):
         self.reason = ""
 
     def figure(self, **kw):
-        from . import plots
+        from ..grafik import plots
         if _is_inf(self.x0):
             kw.setdefault("xlim", (-10, 10))
             return plots.plot_function(self.expr, **kw)
@@ -665,7 +665,7 @@ class LimitLawsResult(Result):
         return bool(self.checks) and all(self.checks.values())
 
     def figure(self, **kw):
-        from . import plots
+        from ..grafik import plots
         return plots.plot_limit(self.f + self.g, self.x0, **kw)
 
 
@@ -759,7 +759,7 @@ class ContinuityResult(Result):
         self.domain = None
 
     def figure(self, **kw):
-        from . import plots
+        from ..grafik import plots
         if self.x0 is None:
             pts = [p.x0 for p in self.points]
             lo = float(min(pts)) - 2 if pts else -5
@@ -970,7 +970,7 @@ class TableResult(Result):
         self.rows_right: list = []
 
     def figure(self, **kw):
-        from . import plots
+        from ..grafik import plots
         if _is_inf(self.x0):
             kw.setdefault("xlim", (-10, 10))
             return plots.plot_function(self.expr, **kw)

@@ -119,7 +119,7 @@ def _simplify_quotient(q, var):
 
 
 def _need_fig(module_attr):
-    from . import plots
+    from ..grafik import plots
     return getattr(plots, module_attr)
 
 

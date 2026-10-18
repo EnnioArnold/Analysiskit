@@ -25,7 +25,7 @@ Verwendung:
     pfad = render(job, out_dir="filme", progress=lambda p, t: print(p, t))
 
 Von der Kommandozeile (rendert eine Szene in niedriger Qualität):
-    python3 -m anakit.anim secant_to_tangent "x^2" 1
+    python3 -m anakit.grafik.anim secant_to_tangent "x^2" 1
 """
 
 from __future__ import annotations
@@ -137,7 +137,7 @@ class AnimationJob:
 def _f_text(f) -> str:
     """Funktion (Text, SymPy oder Python-Funktion) als Text, der sich wieder einlesen lässt."""
     import sympy as sp
-    from .core import parse
+    from ..rechnen.core import parse
     try:
         expr = parse(f)
     except Exception as exc:
@@ -921,7 +921,7 @@ if {pkg!r} not in sys.modules:
     _p = importlib.util.module_from_spec(_spec)
     sys.modules[{pkg!r}] = _p
     _spec.loader.exec_module(_p)
-_mod = importlib.import_module({pkg!r} + ".anim")
+_mod = importlib.import_module({pkg!r} + ".grafik.anim")
 
 for _key, _cls in _mod._build_scenes().items():
     _cls.__module__ = __name__
@@ -933,7 +933,7 @@ _PROGRESS = re.compile(r"(\d+)\s*%")
 
 def _package() -> tuple[str, str]:
     """(Name des Pakets, Ordner, der es enthält) — damit der Kindprozess es importieren kann."""
-    here = Path(__file__).resolve().parent
+    here = Path(__file__).resolve().parent.parent
     return (__package__ or here.name).split(".")[0], str(here.parent)
 
 
@@ -958,7 +958,7 @@ def render(job: AnimationJob, *, progress: Callable[[int, str], None] | None = N
     work = Path(out_dir) if out_dir else Path(tempfile.mkdtemp(prefix="anakit-anim-"))
     work.mkdir(parents=True, exist_ok=True)
     script = work / "scene_runner.py"
-    script.write_text(_RUNNER.format(here=str(Path(__file__).resolve().parent), pkg=pkg), encoding="utf-8")
+    script.write_text(_RUNNER.format(here=str(Path(__file__).resolve().parent.parent), pkg=pkg), encoding="utf-8")
 
     folder, flag = QUALITIES.get(QUALITY_ALIASES.get(job.quality, job.quality),
                                  QUALITIES["low"])
@@ -1094,8 +1094,8 @@ def _demo(argv: list[str]) -> int:
 if __name__ == "__main__":
     if not __package__:
         # Direkt gestartet: das Paket über seinen Ordner importierbar machen.
-        _here = Path(__file__).resolve().parent
+        _here = Path(__file__).resolve().parent.parent
         sys.path.insert(0, str(_here.parent))
         import importlib
-        sys.exit(importlib.import_module(_here.name + ".anim")._demo(sys.argv[1:]))
+        sys.exit(importlib.import_module(_here.name + ".grafik.anim")._demo(sys.argv[1:]))
     sys.exit(_demo(sys.argv[1:]))

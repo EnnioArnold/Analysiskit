@@ -31,28 +31,41 @@ Abgabe, `.figure()` die passende Zeichnung.
 
 from __future__ import annotations
 
-from .core import (INF, MINUS, fmt, h, num, parse, pw, tex, to_callable, x)
-from .render import Result, Step, show_tex, tex_to_text
-from .steigung import (DerivativeDefResult, DifferenceQuotientResult, LineResult,
+from .rechnen.core import (INF, MINUS, fmt, h, num, parse, pw, tex, to_callable, x)
+from .rechnen.render import Result, Step, show_tex, tex_to_text
+from .rechnen.steigung import (DerivativeDefResult, DifferenceQuotientResult, LineResult,
                        SecantResult, SecantTableResult, SlopeResult, TangentResult,
                        derivative_by_definition, difference_quotient, line_point_slope,
                        line_slope_intercept, line_through, secant, secant_h,
                        secant_table, slope, tangent, tangent_slope)
-from .limits import (ContinuityResult, LimitLawsResult, LimitResult, TableResult,
+from .rechnen.limits import (ContinuityResult, LimitLawsResult, LimitResult, TableResult,
                      continuity, is_continuous, limit, limit_infinity, limit_laws,
                      limit_table)
-from .derivative import (CheckResult, DerivativeAtResult, DerivativeResult,
+from .rechnen.derivative import (CheckResult, DerivativeAtResult, DerivativeResult,
                          RuleResult, RuleTable, check_derivative, derive, diff,
                          diff_at, diff_chain, diff_constant_factor,
                          diff_constant_summand, diff_inverse, diff_product,
                          diff_quotient, diff_sum, rule, rule_table)
-from .analysis import (CriticalResult, CurvatureResult, DiscussionResult,
+from .rechnen.analysis import (CriticalResult, CurvatureResult, DiscussionResult,
                        ExtremaResult, InflectionResult, MonotonyResult,
                        critical_points, curvature, curve_discussion, extrema,
                        inflection_points, monotony)
-from .plots import (has_plotly, plot_curve, plot_derivative, plot_function,
+from .grafik.plots import (has_plotly, plot_curve, plot_derivative, plot_function,
                     plot_limit, plot_secant, plot_secants_to_tangent,
                     plot_tangent, plotly_function)
+
+# Die Module liegen in Unterordnern; die alten Namen (anakit.core, anakit.anim,
+# anakit.exercises, …) bleiben als Alias erhalten, damit Notebooks weiter laufen.
+import importlib as _il, sys as _sys
+for _alias, _real in (("core", "rechnen.core"), ("render", "rechnen.render"),
+                      ("steigung", "rechnen.steigung"), ("limits", "rechnen.limits"),
+                      ("derivative", "rechnen.derivative"), ("analysis", "rechnen.analysis"),
+                      ("plots", "grafik.plots"), ("anim", "grafik.anim"),
+                      ("exercises", "aufgaben.exercises"), ("uebung", "aufgaben.uebung")):
+    _m = _il.import_module(f"{__name__}.{_real}")
+    _sys.modules[f"{__name__}.{_alias}"] = _m
+    globals()[_alias] = _m
+del _il, _sys, _alias, _real, _m
 
 __version__ = "0.1.0"
 

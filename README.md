@@ -45,14 +45,18 @@ Notebook und Fenster teilen sich den Rechenkern, darum können ihre Ergebnisse
 nicht auseinanderlaufen.
 
 ```
-app/      das Fenster (anakit_qt.py)
-docs/     Architektur-Diagramm
-tests/    ein Testskript je Modul
-*.py      die Bibliothek: Rechenkern, Zeichnungen (plots), Animationen (anim), Aufgaben
+app/        das Fenster (anakit_qt.py)
+rechnen/    Rechenkern: core, render und je Semesterwoche steigung, limits,
+            derivative, analysis
+grafik/     Zeichnungen (plots) und Animationen (anim)
+aufgaben/   Übungsaufgaben (exercises) und Vorlagen zum Selbstprüfen (uebung)
+docs/       Architektur-Diagramm
+tests/      ein Testskript je Modul
 ```
 
-Die Bibliothek bleibt flach, damit `import anakit` und `anakit.exercises` im
-Notebook wie bisher laufen.
+Im Notebook bleiben die kurzen Namen: `import anakit as ak`,
+`from anakit.exercises import liste`, `anakit.anim` und so weiter laufen
+unverändert.
 
 ## Genauigkeit
 
@@ -107,7 +111,7 @@ Vier Seiten: **Steigung & Tangente**, **Grenzwerte**, **Ableiten**,
 Die Zeichnungen (`plot_*`) sind matplotlib-Figuren, `dark=True` schaltet den
 Dunkelmodus ein, `plotly_function` öffnet sie interaktiv. Die Animationen sind drei
 Szenen: Sekante wird zur Tangente, Entstehung des Graphen von f′ und die
-Kurvenanalyse (`anakit.anim`).
+Kurvenanalyse (`anakit.grafik.anim`).
 
 ## Tests
 

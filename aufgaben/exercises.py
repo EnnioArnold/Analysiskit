@@ -24,7 +24,7 @@ from __future__ import annotations
 import difflib
 from dataclasses import dataclass, field
 
-from .render import Result, Step
+from ..rechnen.render import Result, Step
 
 __all__ = ["Exercise", "Reading", "EXERCISES", "aufgabe", "liste", "loese",
            "loese_alle", "TripleProductResult"]
@@ -568,7 +568,7 @@ class TripleProductResult(Result):
 
 def _lookup():
     """Alle Verfahren, die als `method` vorkommen dürfen."""
-    from . import analysis, derivative, limits, steigung
+    from ..rechnen import analysis, derivative, limits, steigung
     table = {}
     for mod in (steigung, limits, derivative, analysis):
         for name in dir(mod):
