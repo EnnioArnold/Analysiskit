@@ -18,7 +18,7 @@ https://developer.wolframalpha.com/ (Umgebungsvariable WOLFRAM_APPID oder
 einmalige Eingabe in der App).
 
 Installation:
-    pip install PySide6 matplotlib sympy numpy        # plotly, manim freiwillig
+    pip install PySide6 matplotlib sympy numpy        # plotly, manimgx freiwillig
 
 Start (aus dem Ordner heraus, egal wie er heisst):
     python3 anakit_qt.py
@@ -2707,8 +2707,8 @@ ANIM_QUALITY = {
 #: Ohne QtMultimedia bleibt nur das GIF — kleiner, aber nur 256 Farben.
 ANIM_FORMAT = "mp4" if HAS_VIDEO else "gif"
 
-ANIM_INSTALL_HINT = ("brew install cairo pango pkg-config ffmpeg\n"
-                     "pip install manim")
+ANIM_INSTALL_HINT = ("pip install manimgx   # Rendering und Videoausgabe in einem Paket\n"
+                     "(Manim CE mit ffmpeg geht als Rückfall)")
 
 #: Die Szenen je Seite: Name im Auswahlfeld -> Schlüssel für anim.py.
 ANIM_SCENES = {
@@ -3357,8 +3357,7 @@ class AnimationPane(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
 
-        self.sub = label(subtitle or "Zeigt die Rechnung als kurzen Film, "
-                                     "gerendert mit Manim.", 11, "sec",
+        self.sub = label(subtitle or "Zeigt die Rechnung als kurzen Film.", 11, "sec",
                          wrap=True)
         lay.addWidget(self.sub)
 
@@ -3816,7 +3815,7 @@ class AnalysisPage(QWidget):
         self.stack_out.addWidget(self.anim)
         self.card_out.lay.addWidget(self.stack_out, 1)
 
-    ANIM_SUBTITLE = "Zeigt die Rechnung als kurzen Film, gerendert mit Manim."
+    ANIM_SUBTITLE = "Zeigt die Rechnung als kurzen Film."
 
     # -- Hooks für die Unterklassen --------------------------------------
 
