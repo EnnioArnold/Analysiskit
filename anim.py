@@ -30,6 +30,7 @@ Von der Kommandozeile (rendert eine Szene in niedriger Qualität):
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import re
@@ -68,31 +69,31 @@ _EXPECTED = {"secant_to_tangent": 14, "derivative_graph": 12, "curve_analysis": 
 
 @dataclass
 class Theme:
-    """Farben der Animation; dieselbe Farbfolge wie in plots.py."""
+    """Farben der Animation: Swiss Style, Schwarz/Weiss mit einem Rot."""
     background: str = "#ffffff"
-    text: str = "#1d1d1f"
-    muted: str = "#86868b"
-    grid: str = "#e5e5ea"
-    accent: str = "#0071e3"        # Funktion f
-    secant: str = "#ff9500"
-    tangent: str = "#d70015"
-    derivative: str = "#8944ab"    # f'
-    good: str = "#1d8a3c"          # f' > 0, steigend
-    bad: str = "#d70015"           # f' < 0, fallend
-    curved_left: str = "#5ac8fa"   # f'' > 0
-    curved_right: str = "#ffcc00"  # f'' < 0
-    hi: str = "#ff9500"
-    lo: str = "#8944ab"
-    sat: str = "#00a2a8"
-    wen: str = "#c9a000"
+    text: str = "#000000"
+    muted: str = "#666666"
+    grid: str = "#e0e0e0"
+    accent: str = "#000000"        # Funktion f
+    secant: str = "#666666"
+    tangent: str = "#e60000"
+    derivative: str = "#e60000"    # f'
+    good: str = "#000000"          # f' > 0, steigend
+    bad: str = "#e60000"           # f' < 0, fallend
+    curved_left: str = "#999999"   # f'' > 0
+    curved_right: str = "#e60000"  # f'' < 0
+    hi: str = "#e60000"
+    lo: str = "#000000"
+    sat: str = "#999999"
+    wen: str = "#666666"
 
     @staticmethod
     def dark() -> "Theme":
-        return Theme(background="#1c1c1e", text="#f5f5f7", muted="#8e8e93",
-                     grid="#2f2f32", accent="#0a84ff", secant="#ff9f0a",
-                     tangent="#ff453a", derivative="#bf5af2", good="#30d158",
-                     bad="#ff453a", curved_left="#40c8e0", curved_right="#ffd60a",
-                     hi="#ff9f0a", lo="#bf5af2", sat="#40c8e0", wen="#ffd60a")
+        return Theme(background="#000000", text="#ffffff", muted="#999999",
+                     grid="#2a2a2a", accent="#ffffff", secant="#aaaaaa",
+                     tangent="#ff3333", derivative="#ff3333", good="#ffffff",
+                     bad="#ff3333", curved_left="#777777", curved_right="#ff3333",
+                     hi="#ff3333", lo="#ffffff", sat="#777777", wen="#aaaaaa")
 
 
 @dataclass
@@ -204,15 +205,26 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
 # Verfügbarkeit
 # --------------------------------------------------------------------------
 
+def engine() -> str:
+    """'manimgx' (schnell, bringt ffmpeg mit) wenn installiert, sonst 'manim'.
+    ANAKIT_ENGINE=manim erzwingt den Rückfall."""
+    forced = os.environ.get("ANAKIT_ENGINE")
+    if forced in ("manim", "manimgx"):
+        return forced
+    import importlib.util
+    return "manimgx" if importlib.util.find_spec("manimgx") else "manim"
+
+
 def manim_available() -> tuple[bool, str]:
-    """(verfügbar, Begründung) — prüft Manim und ffmpeg ohne Import-Fehler."""
+    """(verfügbar, Begründung) — prüft die Engine (und bei Manim ffmpeg) ohne Import-Fehler."""
+    name = engine()
     try:
-        import manim  # noqa: F401
+        importlib.import_module(name)
     except ImportError:
         return False, "Manim ist nicht installiert."
     except Exception as exc:                       # defekte Installation
-        return False, f"Manim lässt sich nicht laden: {exc}"
-    if shutil.which("ffmpeg") is None:
+        return False, f"{name} lässt sich nicht laden: {exc}"
+    if name == "manim" and shutil.which("ffmpeg") is None:
         return False, "ffmpeg fehlt — nötig für die Videoausgabe."
     return True, ""
 
@@ -278,6 +290,8 @@ def _clip_line(xa, ya, m, xlim, ylim):
 
 def _pick_font() -> str | None:
     """Eine serifenlose Schrift, die auf dem Rechner da ist (sonst Manims Standard)."""
+    if engine() == "manimgx":
+        return "Noto Sans"                         # bringt manimgx selbst mit
     try:
         import manimpango
         have = set(manimpango.list_fonts())
@@ -307,10 +321,14 @@ def _build_scenes():
     installiertes Manim importierbar bleibt.
     """
     import numpy as np
-    from manim import (Scene, VGroup, VMobject, Text, Line, DashedLine, Dot, Circle,
-                       Polygon, FadeIn, FadeOut, Create, Write, ReplacementTransform,
-                       GrowFromCenter, Indicate, ValueTracker, always_redraw, smooth,
-                       linear, UP, DOWN, LEFT, RIGHT)
+    mod = importlib.import_module(engine())
+    Scene, VGroup, VMobject, Text, Line, DashedLine, Dot, Circle, Polygon, FadeIn, FadeOut, \
+        Create, Write, ReplacementTransform, GrowFromCenter, Indicate, ValueTracker, \
+        always_redraw, smooth, linear, UP, DOWN, LEFT, RIGHT = (
+            getattr(mod, n) for n in (
+                "Scene VGroup VMobject Text Line DashedLine Dot Circle Polygon FadeIn FadeOut "
+                "Create Write ReplacementTransform GrowFromCenter Indicate ValueTracker "
+                "always_redraw smooth linear UP DOWN LEFT RIGHT").split())
     from .plots import (_Fn, _deriv, _scan, _auto_ylim, _roots, _analyse,
                         _sign_intervals, _slope, _num, _pi_ticks, _pretty)
 
@@ -949,8 +967,18 @@ def render(job: AnimationJob, *, progress: Callable[[int, str], None] | None = N
     # Immer MP4 rendern. Manims eigener GIF-Export erzeugt eine fehlerhafte
     # Palette (schwarze Schrift wird gelb); das GIF entsteht darum unten in
     # einem zweiten Schritt mit palettegen.
-    cmd = [sys.executable, "-m", "manim", flag, "--disable_caching",
-           "--media_dir", str(work / "media"), "-o", stem, str(script), name]
+    if engine() == "manimgx":
+        w = folder.split("p")[0]
+        res = {"480": "854x480", "720": "1280x720", "1080": "1920x1080",
+               "1440": "2560x1440"}[w]
+        fps = folder.split("p")[1]
+        out = work / "media" / f"{stem}.mp4"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        cmd = [sys.executable, "-m", "manimgx", "render", str(script), name,
+               "-o", str(out), "-r", res, "--fps", fps]
+    else:
+        cmd = [sys.executable, "-m", "manim", flag, "--disable_caching",
+               "--media_dir", str(work / "media"), "-o", stem, str(script), name]
 
     env = dict(os.environ)
     env["ANAKIT_JOB"] = job.to_json()
