@@ -44,6 +44,20 @@ _NAMESPACE = {
 }
 
 
+#: parse_expr wertet den Text mit eval() aus. Erlaubt ist darum nur, was in einem
+#: Term vorkommt: kein "_", keine Anführungszeichen oder eckigen/geschweiften
+#: Klammern, Punkt nur zwischen Ziffern. So erreicht Text weder Attribute
+#: (x.__class__) noch Strings.
+_UNSAFE = re.compile(r"[^\w\s+\-*/^%(),<>=!&|.]|_|(?<!\d)\.|\.(?!\d)")
+
+
+def _eval(text: str):
+    if _UNSAFE.search(text):
+        raise ValueError(f"Unzulässige Zeichen im Term: {text!r}")
+    return parse_expr(text, local_dict=_NAMESPACE, transformations=_TRANSFORMS,
+                      evaluate=True)
+
+
 def _parse_piecewise(text: str):
     """'x^2 if x<1 else 2-x' -> Piecewise((x**2, x<1), (2-x, True))."""
     parts = re.split(r"\s+else\s+", text.strip())
@@ -58,8 +72,7 @@ def _parse_piecewise(text: str):
 
 
 def _parse_cond(text: str):
-    return parse_expr(text.replace("^", "**"), local_dict=_NAMESPACE,
-                      transformations=_TRANSFORMS, evaluate=True)
+    return _eval(text.replace("^", "**"))
 
 
 def parse(expr) -> sp.Expr:
@@ -83,8 +96,7 @@ def parse(expr) -> sp.Expr:
         .replace("³", "^3").replace("√", "sqrt")
     if re.search(r"\s+if\s+", text):
         return _parse_piecewise(text)
-    return parse_expr(text, local_dict=_NAMESPACE, transformations=_TRANSFORMS,
-                      evaluate=True)
+    return _eval(text)
 
 
 def pw(*cases) -> sp.Piecewise:
