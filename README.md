@@ -87,7 +87,7 @@ Ordner entpacken, dann im Terminal:
 ```bash
 cd anakit                        # Ordnername ist egal
 pip install -r requirements.txt  # einmalig
-python3 anakit_qt.py
+python3 app/anakit_qt.py
 ```
 
 Vier Seiten: **Steigung & Tangente**, **Grenzwerte**, **Ableiten**,
