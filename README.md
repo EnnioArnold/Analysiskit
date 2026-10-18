@@ -44,6 +44,16 @@ den Rechenweg für eine Abgabe, `.figure()` die Zeichnung.
 Notebook und Fenster teilen sich den Rechenkern, darum können ihre Ergebnisse
 nicht auseinanderlaufen.
 
+```
+app/      das Fenster (anakit_qt.py)
+docs/     Architektur-Diagramm
+tests/    ein Testskript je Modul
+*.py      die Bibliothek: Rechenkern, Zeichnungen (plots), Animationen (anim), Aufgaben
+```
+
+Die Bibliothek bleibt flach, damit `import anakit` und `anakit.exercises` im
+Notebook wie bisher laufen.
+
 ## Genauigkeit
 
 Gerechnet wird exakt mit SymPy: `1/3` bleibt `1/3`, `sqrt(2)` bleibt
@@ -87,7 +97,7 @@ Ordner entpacken, dann im Terminal:
 ```bash
 cd anakit                        # Ordnername ist egal
 pip install -r requirements.txt  # einmalig
-python3 anakit_qt.py
+python3 app/anakit_qt.py
 ```
 
 Vier Seiten: **Steigung & Tangente**, **Grenzwerte**, **Ableiten**,
