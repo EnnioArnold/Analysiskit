@@ -95,6 +95,15 @@ class Theme:
                      bad="#ff3333", curved_left="#777777", curved_right="#ff3333",
                      hi="#ff3333", lo="#ffffff", sat="#777777", wen="#aaaaaa")
 
+    @staticmethod
+    def b3b1() -> "Theme":
+        """Look von 3Blue1Brown: Schwarz, Manim-Blau für f, Gelb und Rot für den Rest."""
+        return Theme(background="#000000", text="#ffffff", muted="#bbbbbb",
+                     grid="#1c3a4a", accent="#58c4dd", secant="#ffff00",
+                     tangent="#fc6255", derivative="#83c167", good="#83c167",
+                     bad="#fc6255", curved_left="#58c4dd", curved_right="#ffff00",
+                     hi="#fc6255", lo="#58c4dd", sat="#ffff00", wen="#ff862f")
+
 
 @dataclass
 class AnimationJob:
@@ -149,7 +158,7 @@ def _f_text(f) -> str:
 
 def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
               xlim=None, ylim=None, hs=None, dark: bool = False, title: str = "",
-              theme: Theme | None = None) -> AnimationJob:
+              theme: Theme | None = None, style: str = "swiss") -> AnimationJob:
     """
     Baut einen Auftrag; rechnen und zeichnen tut erst render().
 
@@ -158,6 +167,7 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
     quality 'low' (Vorschau), 'medium' (720p30), 'high' (1080p60), 'ultra' (1440p60);
             auch '720p30' usw. sind erlaubt
     fmt     'mp4' oder 'gif'
+    style   'swiss' (Standard) oder '3b1b' (Farben wie bei 3Blue1Brown)
     x0      Stelle der Tangente bzw. des Grenzwerts — für secant_to_tangent und limit_approach nötig
     hs      Abstände h der Sekante bzw. zu x0, in der Reihenfolge der Animation
     """
@@ -169,6 +179,8 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
                          + ", ".join(QUALITIES) + " oder " + ", ".join(QUALITY_ALIASES))
     if fmt not in ("mp4", "gif"):
         raise ValueError("fmt muss 'mp4' oder 'gif' sein")
+    if style not in ("swiss", "3b1b"):
+        raise ValueError("style muss 'swiss' oder '3b1b' sein")
     from .plots import _xval, _xlim, _Fn
     text = _f_text(f)
     xl = _xlim(xlim, None)
@@ -197,7 +209,8 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
     return AnimationJob(
         scene=scene, f=text, x0=x0v, hs=hlist,
         xlim=list(xl) if xl else None, ylim=list(yl) if yl else None,
-        title=title, theme=theme or (Theme.dark() if dark else Theme()),
+        title=title, theme=theme or (Theme.b3b1() if style == "3b1b"
+                        else Theme.dark() if dark else Theme()),
         quality=quality, fmt=fmt)
 
 
