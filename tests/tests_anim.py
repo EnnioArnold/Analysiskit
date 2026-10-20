@@ -28,6 +28,8 @@ t, d = Theme(), Theme.dark()
 assert (t.background, d.background) == ("#ffffff", "#000000")
 assert t.tangent.startswith("#e") and d.tangent.startswith("#ff")
 assert build_job("derivative_graph", "x^2", dark=True).theme == d
+assert build_job("derivative_graph", "x^2", style="3b1b").theme == Theme.b3b1()
+assert raises(ValueError, build_job, "derivative_graph", "x^2", style="nix")
 
 # (c) Engine-Wahl
 old = os.environ.get("ANAKIT_ENGINE")
