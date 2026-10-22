@@ -2907,6 +2907,7 @@ ANIM_SCENES = {
     "limits": {"x nähert sich x₀": "limit_approach"},
     "derivative": {"f und f′": "derivative_graph"},
     "curve": {"Kurvendiskussion": "curve_analysis"},
+    "hoeher": {"Taylor-Polynome": "taylor"},
 }
 
 
@@ -3777,7 +3778,7 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     if ak_anim is None:
         return ("Die Animation (anim.py) ist in diesem Ordner nicht vorhanden. "
                 "Sie ist freiwillig; alles andere funktioniert auch ohne.")
-    if page in ("numerik", "hoeher"):
+    if page == "numerik":
         return ("Zu dieser Seite gibt es noch keine Animation — Rechenweg und Zeichnung "
                 "zeigen das Ergebnis.")
     if not scene:
@@ -3792,6 +3793,15 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     kw = {}
     if page == "limits" and p.get("action") not in ("limit", "table", "cont"):
         return "Für diese Aufgabe gibt es keine Animation — wähle einen Grenzwert."
+    if page == "hoeher":
+        if p.get("action") not in ("mac", "taylor"):
+            return "Für diese Aufgabe gibt es keine Animation — wähle MacLaurin oder Taylor."
+        try:
+            kw["x0"] = 0.0 if p.get("action") == "mac" else float(
+                read_number(p.get("x0") or "", "die Entwicklungsstelle x₀"))
+            kw["n"] = int(read_number(p.get("n") or "", "den Grad n"))
+        except Exception as exc:
+            return f"Die Animation braucht x₀ und den Grad n: {exc}"
     if scene in ("secant_to_tangent", "limit_approach"):
         try:
             x0 = read_number(p.get("x0") or p.get("x1") or "", "die Stelle x₀")

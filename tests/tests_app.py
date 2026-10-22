@@ -213,6 +213,13 @@ check(isinstance(ok, bool))
 job = A.anim_job_for("steigung", {"f": "x^2", "method": "tan", "x0": "1"}, object(),
                      "secant_to_tangent", "medium") if A.ak_anim else None
 check(job is None or hasattr(job, "scene") or isinstance(job, str))
+check(A.ANIM_SCENES["hoeher"] == {"Taylor-Polynome": "taylor"})
+if A.ak_anim:
+    ph = dict(A.DEFAULTS["hoeher"], action="taylor", f="exp(x)", x0="1", n="3")
+    job = A.anim_job_for("hoeher", ph, object(), "taylor", "low")
+    check(getattr(job, "scene", "") == "taylor" and job.n == 3 and job.x0 == 1.0, job)
+    job = A.anim_job_for("hoeher", dict(ph, action="higher"), object(), "taylor", "low")
+    check(isinstance(job, str), job)
 
 # Zeichnung: Mausrad zoomt, Doppelklick setzt zurück, Hover zeigt Koordinaten
 import matplotlib.pyplot as plt
