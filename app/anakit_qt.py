@@ -2907,6 +2907,8 @@ ANIM_SCENES = {
     "limits": {"x nähert sich x₀": "limit_approach"},
     "derivative": {"f und f′": "derivative_graph"},
     "curve": {"Kurvendiskussion": "curve_analysis"},
+    "numerik": {"Bisektion": "bisection", "Newton-Verfahren": "newton"},
+    "hoeher": {"Taylor-Polynome": "taylor"},
 }
 
 
@@ -3777,9 +3779,11 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     if ak_anim is None:
         return ("Die Animation (anim.py) ist in diesem Ordner nicht vorhanden. "
                 "Sie ist freiwillig; alles andere funktioniert auch ohne.")
-    if page in ("numerik", "hoeher"):
-        return ("Zu dieser Seite gibt es noch keine Animation — Rechenweg und Zeichnung "
+    if page == "numerik" and p.get("action") not in ("bisect", "newton"):
+        return ("Zu dieser Aufgabe gibt es noch keine Animation — Rechenweg und Zeichnung "
                 "zeigen das Ergebnis.")
+    if page == "numerik" and {"bisect": "bisection", "newton": "newton"}[p["action"]] != scene:
+        return "Diese Animation passt nicht zur gewählten Aufgabe."
     if not scene:
         return "Zu dieser Seite gibt es keine Animation."
     if page == "steigung" and p.get("method") == "line":
@@ -3792,12 +3796,29 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     kw = {}
     if page == "limits" and p.get("action") not in ("limit", "table", "cont"):
         return "Für diese Aufgabe gibt es keine Animation — wähle einen Grenzwert."
-    if scene in ("secant_to_tangent", "limit_approach"):
+    if scene == "newton":
+        kw["n"] = min(max(len(getattr(result, "rows", ())), 1), 6)
+    if page == "hoeher":
+        if p.get("action") not in ("mac", "taylor"):
+            return "Für diese Aufgabe gibt es keine Animation — wähle MacLaurin oder Taylor."
+        try:
+            kw["x0"] = 0.0 if p.get("action") == "mac" else float(
+                read_number(p.get("x0") or "", "die Entwicklungsstelle x₀"))
+            kw["n"] = int(read_number(p.get("n") or "", "den Grad n"))
+        except Exception as exc:
+            return f"Die Animation braucht x₀ und den Grad n: {exc}"
+    if scene in ("secant_to_tangent", "limit_approach", "newton"):
         try:
             x0 = read_number(p.get("x0") or p.get("x1") or "", "die Stelle x₀")
             kw["x0"] = float(x0)
         except Exception as exc:
             return f"Die Animation braucht eine Stelle x₀: {exc}"
+    if scene == "bisection":
+        try:
+            kw["a"] = float(read_number(p.get("a") or "", "die linke Grenze a"))
+            kw["b"] = float(read_number(p.get("b") or "", "die rechte Grenze b"))
+        except Exception as exc:
+            return f"Die Animation braucht das Intervall a, b: {exc}"
     if scene == "curve_analysis":
         try:
             lo, hi = p.get("a", "").strip(), p.get("b", "").strip()

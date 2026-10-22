@@ -213,6 +213,26 @@ check(isinstance(ok, bool))
 job = A.anim_job_for("steigung", {"f": "x^2", "method": "tan", "x0": "1"}, object(),
                      "secant_to_tangent", "medium") if A.ak_anim else None
 check(job is None or hasattr(job, "scene") or isinstance(job, str))
+if A.ak_anim:
+    bp = dict(A.DEFAULTS["numerik"], action="bisect", f="x^2-1.5", a="1", b="4")
+    job = A.anim_job_for("numerik", bp, object(), "bisection", "low")
+    check(getattr(job, "scene", "") == "bisection" and (job.a, job.b) == (1.0, 4.0), job)
+    check(isinstance(A.anim_job_for("numerik", dict(bp, action="newton"), object(), "bisection", "low"), str))
+    check(isinstance(A.anim_job_for("hoeher", bp, object(), "bisection", "low"), str))
+    check(isinstance(A.anim_job_for("numerik", dict(bp, f="x^2+1"), object(), "bisection", "low"), str))
+    from types import SimpleNamespace as NS
+    jn = A.anim_job_for("numerik", {"f": "x^2-2", "action": "newton", "x0": "3"},
+                        NS(rows=[0, 1, 2, 3]), "newton", "low")
+    check(getattr(jn, "scene", "") == "newton" and jn.n == 4 and jn.x0 == 3.0, jn)
+    check(isinstance(A.anim_job_for("hoeher", {"f": "x^2"}, object(), "newton", "low"), str))
+if A.ak_anim:
+    ph = dict(A.DEFAULTS["hoeher"], action="taylor", f="exp(x)", x0="1", n="3")
+    job = A.anim_job_for("hoeher", ph, object(), "taylor", "low")
+    check(getattr(job, "scene", "") == "taylor" and job.n == 3 and job.x0 == 1.0, job)
+    job = A.anim_job_for("hoeher", dict(ph, action="higher"), object(), "taylor", "low")
+    check(isinstance(job, str), job)
+check(A.ANIM_SCENES["numerik"] == {"Bisektion": "bisection", "Newton-Verfahren": "newton"})
+check(A.ANIM_SCENES["hoeher"] == {"Taylor-Polynome": "taylor"})
 
 # Zeichnung: Mausrad zoomt, Doppelklick setzt zurück, Hover zeigt Koordinaten
 import matplotlib.pyplot as plt
