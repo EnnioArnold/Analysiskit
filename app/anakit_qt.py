@@ -2,14 +2,16 @@
 """
 anakit — Analysis mit Rechenweg, als Desktop-App im Apple-Stil (Qt).
 
-Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 4). Die App rechnet
+Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 6). Die App rechnet
 mit demselben Paket `anakit` wie das Notebook; sie ist nur eine andere
-Oberfläche dafür. Vier Seiten:
+Oberfläche dafür. Sechs Seiten:
 
     Steigung & Tangente   Sekanten, Tangente, Ableitung aus der Definition
     Grenzwerte            Grenzwert, Stetigkeit, Wertetabelle
     Ableiten              Ableitungsregeln, Einzelregeln, Eigene Ableitung prüfen
     Kurvendiskussion      Monotonie, kritische Punkte, Krümmung, Extrema
+    Numerik               Bisektion, Newton-Verfahren, numerisch Differenzieren
+    Höhere Ableitungen    Taylor, MacLaurin, Sonderfälle, Funktionsüberblick
 
 Jede Seite zeigt ihr Ergebnis als Karte mit drei Ansichten: Rechenweg
 (gesetzte Formeln), Zeichnung und Animation. Die Prüfung mit Wolfram|Alpha
@@ -227,13 +229,13 @@ def friendly_error(exc: BaseException) -> str:
 
 
 # ==========================================================================
-# Die Rechnungen der vier Seiten
+# Die Rechnungen der sechs Seiten
 # ==========================================================================
 #
 # Jede Seite hat ein Wörterbuch `p` mit den Eingaben als Text; `calc(seite, p)`
 # gibt das anakit-Ergebnis zurück oder wirft einen InputError.
 
-PAGE_KEYS = ("steigung", "limits", "derivative", "curve")
+PAGE_KEYS = ("steigung", "limits", "derivative", "curve", "numerik", "hoeher")
 
 STEIGUNG_METHODS = [("sek12", "Sekante", "Sekante durch die Stellen x₁ und x₂"),
                     ("sekh", "Sekante (h)", "Differenzenquotient an x₀ mit Abstand h"),
@@ -270,6 +272,18 @@ CURVE_ACTIONS = [("all", "Alles", "Ganze Kurvendiskussion mit Zusammenfassung"),
                  ("curv", "Krümmung", "Krümmungsverhalten über f″"),
                  ("ext", "Extrema", "Lokale Extrema mit dem Kriterium der zweiten Ableitung"),
                  ("infl", "Wendepunkte", "Wendepunkte: f″(x₀) = 0, f‴(x₀) ≠ 0")]
+
+NUMERIK_ACTIONS = [("bisect", "Bisektion", "Nullstelle durch Halbieren des Intervalls [a, b]"),
+                   ("newton", "Newton", "Nullstelle mit dem Newton-Verfahren aus einem Startwert"),
+                   ("numdiff", "Differenz", "f′(x₀) numerisch: vorwärts, rückwärts oder zentral"),
+                   ("errtab", "Fehler", "Fehler der Differenz für h = 10⁻¹ … 10⁻¹⁶ (optimale Schrittweite)")]
+
+DIFF_KINDS = [("vorwaerts", "vorwärts"), ("rueckwaerts", "rückwärts"), ("zentral", "zentral")]
+
+HOEHER_ACTIONS = [("taylor", "Taylor", "Taylor-Polynom n-ten Grades um die Stelle x₀"),
+                  ("mac", "MacLaurin", "MacLaurin-Polynom n-ten Grades (x₀ = 0)"),
+                  ("higher", "Sonderfall", "Erste nichtverschwindende Ableitung an x₀ und der Schluss daraus"),
+                  ("basics", "Überblick", "Definitionsbereich, Symmetrie, Nullstellen, Pole, Asymptoten")]
 
 #: Beispiele je Seite: (Name, Eingaben als Wörterbuch). Wer eine Seite
 #: öffnet, kann sie durchklicken — und der Test rechnet jede einzelne.
@@ -318,6 +332,25 @@ EXAMPLES: dict[str, list[tuple[str, dict]]] = {
         ("sin(x) auf [0, 2π] (Krümmung)", dict(f="sin(x)", a="0", b="2*pi", action="curv")),
         ("x³ (Sattelpunkt, Wendepunkte)", dict(f="x^3", a="", b="", action="infl")),
     ],
+    # SW5: die ersten vier stammen aus den Notebooks der Vorlesung
+    "numerik": [
+        ("Newton: x² − 1.5 ab 3", dict(f="x^2-1.5", action="newton", x0="3")),
+        ("Bisektion: x² − 1.5 auf [1, 4]", dict(f="x^2-1.5", action="bisect", a="1", b="4", tol="1e-6")),
+        ("Zentrale Differenz: x³ − 5 bei 1", dict(f="x^3-5", action="numdiff", x0="1", h="1e-6", kind="zentral")),
+        ("Newton mit numerischer Ableitung: x³ − 5", dict(f="x^3-5", action="newton", x0="3", numerisch="1")),
+        ("Vorwärtsdifferenz: e^x bei 1 (optimales h)", dict(f="e^x", action="numdiff", x0="1", h="", kind="vorwaerts")),
+        ("Fehler und Schrittweite: e^x bei 1", dict(f="e^x", action="errtab", x0="1", kind="vorwaerts")),
+    ],
+    # SW6: eigene Beispiele zum Stoff (die Folien rechnen keine vor)
+    "hoeher": [
+        ("MacLaurin von e^x, Grad 4", dict(f="e^x", action="mac", n="4")),
+        ("MacLaurin von sin(x), Grad 5", dict(f="sin(x)", action="mac", n="5")),
+        ("Taylor von ln(x) um 1, Grad 3", dict(f="ln(x)", action="taylor", x0="1", n="3")),
+        ("Sonderfall x⁴ bei 0 (Minimum)", dict(f="x^4", action="higher", x0="0")),
+        ("Sonderfall x³ bei 0 (Sattelpunkt)", dict(f="x^3", action="higher", x0="0")),
+        ("Überblick x²/(x−1)", dict(f="x^2/(x-1)", action="basics")),
+        ("Überblick (2x²+1)/(x²−3)", dict(f="(2x^2+1)/(x^2-3)", action="basics")),
+    ],
 }
 
 DEFAULTS: dict[str, dict] = {
@@ -327,6 +360,9 @@ DEFAULTS: dict[str, dict] = {
     "derivative": dict(f="ln(x^2+1)", n="1", action="diff", x0="1", rule="produkt",
                        g="e^x", claimed=""),
     "curve": dict(f="x^3-3x", a="", b="", action="all"),
+    "numerik": dict(f="x^2-1.5", action="newton", a="1", b="4", tol="1e-6", x0="3", h="",
+                    kind="zentral", numerisch="0"),
+    "hoeher": dict(f="e^x", action="mac", x0="0", n="4"),
 }
 
 
@@ -443,8 +479,61 @@ def calc_curve(p: dict):
     return fn[action](f, dom)
 
 
+def _pos_float(p: dict, key: str, what: str, lo: float = 1e-15) -> float:
+    """Eine positive Zahl als float lesen (Toleranz, Schrittweite)."""
+    v = float(_val(p, key, what))
+    if not v >= lo:
+        raise InputError(f"{what[0].upper() + what[1:]} muss mindestens {lo:g} sein.")
+    return v
+
+
+def calc_numerik(p: dict):
+    action = p.get("action", "newton")
+    _, f = read_function(p.get("f", ""))
+    if action == "bisect":
+        a, b = _val(p, "a", "die linke Grenze a"), _val(p, "b", "die rechte Grenze b")
+        if not float(a) < float(b):
+            raise InputError("Für die Bisektion muss a kleiner als b sein.")
+        return ak.bisection(f, a, b, _pos_float(p, "tol", "die Toleranz"))
+    kind = p.get("kind", "zentral")
+    if kind not in dict(DIFF_KINDS):
+        raise InputError("Unbekannte Differenz.")
+    x0 = _val(p, "x0", "die Stelle x₀" if action != "newton" else "den Startwert x₀")
+    if action == "newton":
+        return ak.newton(f, x0, _pos_float(p, "tol", "die Toleranz"),
+                         numerisch=p.get("numerisch") == "1")
+    if action == "numdiff":
+        h_text = (p.get("h") or "").strip()
+        hv = _pos_float(p, "h", "die Schrittweite h", 1e-300) if h_text else None
+        return ak.numeric_diff(f, x0, hv, kind)
+    if action == "errtab":
+        return ak.diff_error_table(f, x0, kind)
+    raise InputError("Unbekannte Aktion.")
+
+
+def calc_hoeher(p: dict):
+    action = p.get("action", "mac")
+    _, f = read_function(p.get("f", ""))
+    if action == "basics":
+        return ak.curve_basics(f)
+    if action == "higher":
+        return ak.higher_order_test(f, _val(p, "x0", "die Stelle x₀"))
+    try:
+        n = int(float(p.get("n", "")))
+    except ValueError:
+        raise InputError("Der Grad n muss eine ganze Zahl sein.") from None
+    if not 0 <= n <= 15:
+        raise InputError("Der Grad n muss zwischen 0 und 15 liegen.")
+    if action == "mac":
+        return ak.maclaurin(f, n)
+    if action == "taylor":
+        return ak.taylor(f, _val(p, "x0", "die Stelle x₀"), n)
+    raise InputError("Unbekannte Aktion.")
+
+
 CALC = {"steigung": calc_steigung, "limits": calc_limits,
-        "derivative": calc_derivative, "curve": calc_curve}
+        "derivative": calc_derivative, "curve": calc_curve,
+        "numerik": calc_numerik, "hoeher": calc_hoeher}
 
 
 def calc(page: str, p: dict):
@@ -1329,8 +1418,106 @@ def wolfram_checks_curve(appid, p, res, ask=None) -> WolframReport:
     return report
 
 
+def _wolfram_series(answer: str) -> sp.Expr:
+    """Wolframs Reihe »1 + x + x^2/2 + O(x^3)« ohne das Restglied lesen."""
+    first = next((ln for ln in (answer or "").splitlines() if ln.strip()), "")
+    first = re.sub(r"\s*[+-]\s*O\(.*$", "", first.split("=")[-1] if "=" in first else first)
+    return parse_wolfram_expr(first)
+
+
+def wolfram_checks_numerik(appid, p, res, ask=None) -> WolframReport:
+    report = WolframReport()
+    action = p.get("action", "newton")
+    wf = wolfram_input(res.f)
+    if action in ("bisect", "newton"):
+        q = f"solve {wf} = 0 for x"
+        report.url = browser_url(q)
+        ans = _ask(appid, {"r": q}, ask)["r"]
+        name = "Nullstelle (Näherung)"
+        if isinstance(ans, Exception):
+            report.checks.append(Check(name, "error", ours=_num(res.root), note=str(ans)))
+            return report
+        _note_text(report, "Nullstellen", q, ans)
+        try:
+            theirs = parse_wolfram_points(ans)
+        except ValueError as exc:
+            report.checks.append(Check(name, "info", ours=_num(res.root), note=_nicht_auswertbar(ans, exc)))
+            return report
+        near = [t for t in theirs if abs(t - res.root) <= 1e-4 * (1 + abs(t))]
+        report.checks.append(Check(
+            name, "ok" if near else "bad", ours=_num(res.root),
+            theirs="" if near else (", ".join(_num(t) for t in theirs) or "keine"),
+            note="Liegt bei einer Nullstelle von Wolfram|Alpha." if near else ""))
+        return report
+    q = f"derivative of {wf}"
+    report.url = browser_url(q)
+    ans = _ask(appid, {"d": q}, ask)["d"]
+    exact = getattr(res, "exact", None)
+    if exact is None:
+        exact = sp.diff(res.f, x).subs(x, sp.nsimplify(res.x0))
+    check_expr(report, "Exakte Ableitung f′(x₀) zum Vergleich", exact, ans, label="Ableitung",
+               query=q, at=sp.nsimplify(res.x0))
+    return report
+
+
+def wolfram_checks_hoeher(appid, p, res, ask=None) -> WolframReport:
+    report = WolframReport()
+    action = p.get("action", "mac")
+    f = res.f
+    wf = wolfram_input(f)
+    if action in ("taylor", "mac"):
+        at = wolfram_at(res.x0)
+        q = f"Taylor series of {wf} at x = {at} to order {res.n}"
+        report.url = browser_url(q)
+        ans = _ask(appid, {"t": q}, ask)["t"]
+        name = f"Taylor-Polynom T{res.n}"
+        if isinstance(ans, Exception):
+            report.checks.append(Check(name, "error", ours=fmt(res.polynomial), note=str(ans)))
+            return report
+        _note_text(report, "Reihe", q, ans)
+        try:
+            theirs = _wolfram_series(ans)
+        except ValueError as exc:
+            report.checks.append(Check(name, "info", ours=fmt(res.polynomial), note=_nicht_auswertbar(ans, exc)))
+            return report
+        verdict = exprs_equal(res.polynomial, theirs)
+        report.checks.append(Check(name, "ok" if verdict else "bad", ours=fmt(res.polynomial),
+                                   theirs="" if verdict else fmt(theirs),
+                                   note="Differenz mit SymPy vereinfacht: 0." if verdict else ""))
+        return report
+    if action == "higher":
+        q = f"critical points of {wf}"
+        report.url = browser_url(q)
+        ans = _ask(appid, {"c": q}, ask)["c"]
+        name = f"x₀ = {fmt(res.x0)} ist kritisch" if res.stationary else f"x₀ = {fmt(res.x0)}"
+        if not res.stationary:
+            report.checks.append(Check(name, "info", ours=res.kind,
+                                       note="Keine waagrechte Tangente — nichts zu vergleichen."))
+            return report
+        if isinstance(ans, Exception):
+            report.checks.append(Check(name, "error", note=str(ans)))
+            return report
+        _note_text(report, "Kritische Punkte", q, ans)
+        try:
+            theirs = parse_wolfram_points(ans)
+        except ValueError as exc:
+            report.checks.append(Check(name, "info", note=_nicht_auswertbar(ans, exc)))
+            return report
+        found = any(abs(t - float(res.x0)) < 1e-6 for t in theirs)
+        report.checks.append(Check(name, "ok" if found else "bad", ours=res.kind,
+                                   theirs="" if found else "nicht unter den kritischen Punkten"))
+        return report
+    q = f"roots of {wf}"
+    report.url = browser_url(q)
+    ans = _ask(appid, {"z": q}, ask)["z"]
+    check_points(report, "Nullstellen", [z for z in res.zeros if z.is_number], ans,
+                 label="Nullstellen", query=q)
+    return report
+
+
 WOLFRAM_CHECKS = {"steigung": wolfram_checks_steigung, "limits": wolfram_checks_limits,
-                  "derivative": wolfram_checks_derivative, "curve": wolfram_checks_curve}
+                  "derivative": wolfram_checks_derivative, "curve": wolfram_checks_curve,
+                  "numerik": wolfram_checks_numerik, "hoeher": wolfram_checks_hoeher}
 
 
 def run_wolfram_checks(appid: str, page: str, p: dict, result, ask=None) -> WolframReport:
@@ -1351,6 +1538,10 @@ def wolfram_subtitle(page: str) -> str:
         "derivative": "Vergleicht die Ableitung mit »derivative of f« bei Wolfram|Alpha.",
         "curve": "Vergleicht kritische Punkte, lokale Extrema und Wendepunkte mit "
                  "Wolfram|Alpha.",
+        "numerik": "Vergleicht die Nullstelle mit »solve f(x) = 0« beziehungsweise die exakte "
+                   "Ableitung mit Wolfram|Alpha.",
+        "hoeher": "Vergleicht das Taylor-Polynom (»Taylor series …«), den kritischen Punkt "
+                  "beziehungsweise die Nullstellen mit Wolfram|Alpha.",
     }[page]
 
 
@@ -3586,6 +3777,9 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     if ak_anim is None:
         return ("Die Animation (anim.py) ist in diesem Ordner nicht vorhanden. "
                 "Sie ist freiwillig; alles andere funktioniert auch ohne.")
+    if page in ("numerik", "hoeher"):
+        return ("Zu dieser Seite gibt es noch keine Animation — Rechenweg und Zeichnung "
+                "zeigen das Ergebnis.")
     if not scene:
         return "Zu dieser Seite gibt es keine Animation."
     if page == "steigung" and p.get("method") == "line":
@@ -3627,7 +3821,7 @@ HISTORY_LIMIT = 10
 
 class AnalysisPage(QWidget):
     """
-    Gemeinsames Gerüst der vier Seiten.
+    Gemeinsames Gerüst der sechs Seiten.
 
     Links Eingabe (Funktion, Rechnung) und die Prüfung mit Wolfram|Alpha,
     rechts die Ergebniskarte. Die Unterklassen sagen nur, welche Felder es
@@ -4494,7 +4688,99 @@ class CurvePage(AnalysisPage):
         return f"{p.get('f')}{dom} · {a}"
 
 
-PAGE_CLASSES = [SteigungPage, LimitsPage, DerivativePage, CurvePage]
+# ==========================================================================
+# Seite 5: Numerik (SW5)
+# ==========================================================================
+
+class NumerikPage(AnalysisPage):
+    KEY = "numerik"
+    TITLE = "Numerik"
+    LEDE = ("Nullstellen mit Bisektion und Newton-Verfahren, Ableitungen numerisch genähert — "
+            "mit Fehlerordnung und optimaler Schrittweite.")
+    ACTIONS = NUMERIK_ACTIONS
+    SEG_PAD = 22
+
+    def _kind_row(self):
+        keys = [k for k, _ in DIFF_KINDS]
+        idx = keys.index(self.p.get("kind")) if self.p.get("kind") in keys else 2
+        self.seg_row("Differenz", [n for _, n in DIFF_KINDS], idx,
+                     lambda i: self.set_param("kind", keys[i]))
+
+    def build_form(self):
+        a = self.p.get("action", "newton")
+        if a == "bisect":
+            self.field_row("Intervall", [("a", "a"), ("b", "b")], width=100)
+            self.field_row("Toleranz", [("tol", "z. B. 1e-6")], width=120)
+            self.note_row("f muss auf [a, b] stetig sein und an den Enden verschiedene Vorzeichen "
+                          "haben. Abbruch, wenn die Intervalllänge ≤ Toleranz.")
+        elif a == "newton":
+            self.field_row("Startwert", [("x0", "x₀")], width=100)
+            self.field_row("Toleranz", [("tol", "z. B. 1e-10")], width=120)
+            self.seg_row("Ableitung", ["exakt", "numerisch"], 1 if self.p.get("numerisch") == "1" else 0,
+                         lambda i: self.set_param("numerisch", "1" if i else "0"))
+            self.note_row("xₖ₊₁ = xₖ − f(xₖ)/f′(xₖ). Abbruch, wenn |xₖ₊₁ − xₖ| ≤ Toleranz.")
+        elif a == "numdiff":
+            self.field_row("Stelle", [("x0", "x₀")], width=100)
+            self.field_row("Schrittweite h", [("h", "leer = optimal")], width=140)
+            self._kind_row()
+            self.note_row("Vorwärts/rückwärts: Fehlerordnung h, optimal √ε ≈ 1.5e−8. "
+                          "Zentral: Fehlerordnung h², optimal ∛ε ≈ 6e−6.")
+        else:
+            self.field_row("Stelle", [("x0", "x₀")], width=100)
+            self._kind_row()
+            self.note_row("Fehler gegen die exakte Ableitung, solange h kleiner wird: zuerst sinkt der "
+                          "Verfahrensfehler, dann steigen die Rundungsfehler.")
+
+    def describe(self) -> str:
+        p = self.result_p or self.p
+        a = p.get("action")
+        tail = {"bisect": f"Bisektion [{p.get('a')}, {p.get('b')}]",
+                "newton": f"Newton ab {p.get('x0')}",
+                "numdiff": f"{dict(DIFF_KINDS).get(p.get('kind'), '')}e Differenz bei {p.get('x0')}",
+                "errtab": f"Fehlertabelle bei {p.get('x0')}"}.get(a, "")
+        return f"{p.get('f')} · {tail}"
+
+
+# ==========================================================================
+# Seite 6: Höhere Ableitungen (SW6)
+# ==========================================================================
+
+class HoeherePage(AnalysisPage):
+    KEY = "hoeher"
+    TITLE = "Höhere Ableitungen"
+    LEDE = ("Taylor- und MacLaurin-Polynome, die Sonderfälle der Extrema und Wendepunkte und der "
+            "Funktionsüberblick einer Kurvendiskussion.")
+    ACTIONS = HOEHER_ACTIONS
+    SEG_PAD = 22
+
+    def build_form(self):
+        a = self.p.get("action", "mac")
+        if a == "taylor":
+            self.field_row("Stelle und Grad", [("x0", "x₀"), ("n", "n")], width=100)
+            self.note_row("T_n(x) = Σ f⁽ᵏ⁾(x₀)/k! · (x − x₀)ᵏ, k = 0 … n. f muss bei x₀ n-mal "
+                          "ableitbar sein.")
+        elif a == "mac":
+            self.field_row("Grad", [("n", "n")], width=100)
+            self.note_row("Der Spezialfall x₀ = 0: T_n(x) = Σ f⁽ᵏ⁾(0)/k! · xᵏ.")
+        elif a == "higher":
+            self.field_row("Stelle", [("x0", "x₀")], width=100)
+            self.note_row("Ist f′(x₀) = 0 und f⁽ᵏ⁾(x₀) die erste Ableitung ≠ 0: k gerade ⇒ "
+                          "Minimum bzw. Maximum, k ungerade ⇒ Wendepunkt (Sattelpunkt).")
+        else:
+            self.note_row("Keine weitere Eingabe: Definitions- und Wertebereich, Symmetrie, Nullstellen, "
+                          "Pole und Asymptoten. Ableitungen dazu: Seite »Kurvendiskussion«.")
+
+    def describe(self) -> str:
+        p = self.result_p or self.p
+        a = p.get("action")
+        tail = {"taylor": f"Taylor um {p.get('x0')}, n = {p.get('n')}",
+                "mac": f"MacLaurin, n = {p.get('n')}",
+                "higher": f"Sonderfall bei {p.get('x0')}",
+                "basics": "Überblick"}.get(a, "")
+        return f"{p.get('f')} · {tail}"
+
+
+PAGE_CLASSES = [SteigungPage, LimitsPage, DerivativePage, CurvePage, NumerikPage, HoeherePage]
 
 
 # ==========================================================================
@@ -4502,7 +4788,7 @@ PAGE_CLASSES = [SteigungPage, LimitsPage, DerivativePage, CurvePage]
 # ==========================================================================
 
 class HelpDialog(QDialog):
-    """Kurze Erklärung der Schreibweise und der vier Seiten."""
+    """Kurze Erklärung der Schreibweise und der sechs Seiten."""
 
     SECTIONS = [
         ("Funktionen eingeben", "x^2 − 3x",
@@ -4689,7 +4975,7 @@ class MainWindow(QMainWindow):
     def keyPressEvent(self, event):
         mods = event.modifiers()
         if mods & (Qt.ControlModifier | Qt.MetaModifier):
-            if Qt.Key_1 <= event.key() <= Qt.Key_4:
+            if Qt.Key_1 <= event.key() < Qt.Key_1 + len(PAGE_CLASSES):
                 self.set_page(event.key() - Qt.Key_1)
                 return
             if event.key() in (Qt.Key_Return, Qt.Key_Enter):

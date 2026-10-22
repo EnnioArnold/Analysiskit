@@ -109,6 +109,40 @@ raises_input("limits", {"f": "x", "action": "limit", "x0": "abc", "side": "both"
 msg = A.friendly_error(ZeroDivisionError("x"))
 check(isinstance(msg, str) and msg)
 
+# ---------------------------------------------------------------- SW5/SW6: Seiten Numerik, Höhere Ableitungen
+check(A.PAGE_KEYS == tuple(c.KEY for c in A.PAGE_CLASSES), "PAGE_KEYS und PAGE_CLASSES gleich")
+p = dict(A.DEFAULTS["numerik"], action="newton", f="x^2-1.5", x0="3")
+r = A.calc("numerik", p)
+check(abs(r.root - 1.5 ** 0.5) < 1e-12, "Newton √1.5")
+rep = A.run_wolfram_checks("X", "numerik", p, r, ask=lambda a, q: "x = -1.2247 or x = 1.2247")
+check(rep.verdict == "ok", [(c.name, c.status) for c in rep.checks])
+rep = A.run_wolfram_checks("X", "numerik", p, r, ask=lambda a, q: "x = 7")
+check(rep.verdict == "bad", "falsche Nullstelle wird erkannt")
+p = dict(A.DEFAULTS["numerik"], action="numdiff", f="x^3-5", x0="1", h="1e-6", kind="zentral")
+r = A.calc("numerik", p)
+check(abs(r.approx - 3) < 1e-9, "zentrale Differenz")
+rep = A.run_wolfram_checks("X", "numerik", p, r, ask=lambda a, q: "3 x^2")
+check(rep.verdict == "ok", [(c.name, c.status) for c in rep.checks])
+raises_input("numerik", dict(A.DEFAULTS["numerik"], action="bisect", f="x^2+1", a="0", b="1"), "Vorzeichen")
+raises_input("numerik", dict(A.DEFAULTS["numerik"], action="bisect", a="2", b="1"), "kleiner")
+raises_input("numerik", dict(A.DEFAULTS["numerik"], action="newton", f="x^2-1", x0="0"), "waagrecht")
+raises_input("numerik", dict(A.DEFAULTS["numerik"], action="numdiff", h="-1"), "mindestens")
+p = dict(A.DEFAULTS["hoeher"], action="mac", f="e^x", n="4")
+r = A.calc("hoeher", p)
+check(sp.simplify(r.polynomial - sum(A.x**k / sp.factorial(k) for k in range(5))) == 0, "MacLaurin e^x")
+rep = A.run_wolfram_checks("X", "hoeher", p, r,
+                           ask=lambda a, q: "1 + x + x^2/2 + x^3/6 + x^4/24 + O(x^5)\n(Taylor series)")
+check(rep.verdict == "ok", [(c.name, c.status) for c in rep.checks])
+rep = A.run_wolfram_checks("X", "hoeher", p, r, ask=lambda a, q: "1 + x + O(x^5)")
+check(rep.verdict == "bad", "falsches Polynom wird erkannt")
+p = dict(A.DEFAULTS["hoeher"], action="higher", f="x^4", x0="0")
+r = A.calc("hoeher", p)
+check(r.kind == "relatives Minimum", "Sonderfall x^4")
+rep = A.run_wolfram_checks("X", "hoeher", p, r, ask=lambda a, q: "x = 0")
+check(rep.verdict == "ok", [(c.name, c.status) for c in rep.checks])
+raises_input("hoeher", dict(A.DEFAULTS["hoeher"], action="mac", n="99"), "zwischen")
+raises_input("hoeher", dict(A.DEFAULTS["hoeher"], action="taylor", f="ln(x)", x0="0", n="2"), "nicht definiert")
+
 # ---------------------------------------------------------------- Rechnen ohne Fenster
 for key, examples in A.EXAMPLES.items():
     for name, params in examples:
