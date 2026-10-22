@@ -48,7 +48,7 @@ class TaylorResult(Result):
         self.derivative_values = derivs
         #: aₖ = f⁽ᵏ⁾(x₀)/k!
         self.coefficients = coeffs
-        #: Tₙ(x), ausmultipliziert in Potenzen von (x − x₀)
+        #: Tₙ(x) in Potenzen von (x − x₀), nicht ausmultipliziert
         self.polynomial = poly
         self.maclaurin = maclaurin_form
         self.title = f"{'MacLaurin' if maclaurin_form else 'Taylor'}-Polynom {n}. Grades"
@@ -100,7 +100,7 @@ def taylor(f, x0=0, n: int = 3) -> TaylorResult:
                              "dort gibt es keine Taylor-Entwicklung.")
         derivs.append(v)
     coeffs = [sp.simplify(d / sp.factorial(k)) for k, d in enumerate(derivs)]
-    poly = sp.expand(sum(c * (x - a) ** k for k, c in enumerate(coeffs)))
+    poly = sum((c * (x - a) ** k for k, c in enumerate(coeffs)), sp.S.Zero)
     mac = a == 0
     name = "MacLaurin" if mac else "Taylor"
     A = tex(a)

@@ -95,7 +95,7 @@ class BisectionResult(Result):
         #: Zeilen (k, a_k, b_k, m_k, f(m_k)); die letzte gehört zum letzten Intervall.
         self.rows = rows
         self.root = root
-        self.iterations = len(rows)
+        self.iterations = len(rows) - 1  # Halbierungen; die letzte Zeile ist nur das Ergebnis
         self.last_interval = (rows[-1][1], rows[-1][2]) if rows else (a, b)
         self.summary = ("Auf [a, b] stetig mit Vorzeichenwechsel: die Intervallmitte des "
                         "letzten Intervalls ist der Näherungswert.")
