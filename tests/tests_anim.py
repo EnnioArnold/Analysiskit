@@ -29,6 +29,10 @@ for s in ("limit_approach", "secant_to_tangent"):
     assert raises(ValueError, build_job, s, "x^2"), s
 
 assert build_job("newton", "x^2-2", x0=1, n=3).n == 3 and raises(ValueError, build_job, "newton", "x^2-2", x0=1, n=0)
+j = build_job("taylor", "exp(x)", x0=0, n=3)
+assert j.n == 3 and j.x0 == 0.0 and j.xlim == [-3.0, 3.0]
+assert raises(ValueError, build_job, "taylor", "x^2")
+assert raises(ValueError, build_job, "taylor", "x^2", x0=0, n=11)
 
 # (b) Swiss-Theme
 t, d = Theme(), Theme.dark()
@@ -58,7 +62,10 @@ if ok:
     print("Rendering ok:", anim.engine(), p)
     p = anim.render(build_job("bisection", "x^2-2", a=1, b=2, quality="low"))
     assert os.path.exists(p) and os.path.getsize(p) > 0, p
+    assert os.path.exists(p) and os.path.getsize(p) > 0, p
     p = anim.render(build_job("newton", "x^2-2", x0=3, n=3, quality="low"))
+    assert os.path.exists(p) and os.path.getsize(p) > 0, p
+    p = anim.render(build_job("taylor", "exp(x)", x0=0, n=2, quality="low"))
     assert os.path.exists(p) and os.path.getsize(p) > 0, p
 else:
     print("Rendering übersprungen:", why)

@@ -58,16 +58,17 @@ QUALITIES = {
 QUALITY_ALIASES = {v[0]: k for k, v in QUALITIES.items()}
 
 SCENES = ("secant_to_tangent", "derivative_graph", "curve_analysis", "limit_approach",
-          "bisection", "newton")
+          "bisection", "newton", "taylor")
 SCENE_NAMES = {"secant_to_tangent": "SecantToTangentScene",
                "derivative_graph": "DerivativeGraphScene",
                "curve_analysis": "CurveAnalysisScene",
                "limit_approach": "LimitApproachScene",
                "bisection": "BisectionScene",
-               "newton": "NewtonScene"}
+               "newton": "NewtonScene",
+               "taylor": "TaylorScene"}
 #: Ungefähre Zahl der Teilanimationen, für den Fortschrittsbalken.
 _EXPECTED = {"secant_to_tangent": 14, "derivative_graph": 12, "curve_analysis": 18,
-             "limit_approach": 12, "bisection": 30, "newton": 30}
+             "limit_approach": 12, "bisection": 30, "newton": 30, "taylor": 14}
 
 
 @dataclass
@@ -114,6 +115,7 @@ class AnimationJob:
     Ein Rendering-Auftrag.
 
     scene   — 'secant_to_tangent' | 'derivative_graph' | 'curve_analysis' | 'limit_approach'
+              | 'taylor'
     f       — die Funktion als Text (SymPy-Schreibweise, z. B. 'x**2' oder
               'x^2 if x<1 else x-1')
     x0      — Stelle der Tangente bzw. des Grenzwerts (secant_to_tangent, limit_approach)
@@ -121,6 +123,7 @@ class AnimationJob:
     a, b    — Intervallgrenzen mit Vorzeichenwechsel (bisection)
     n       — Zahl der Newton-Schritte (newton)
     xlim/ylim — Ausschnitt; None heisst automatisch
+    n       — höchster Grad der Taylor-Polynome (taylor)
     fmt     — 'mp4' oder 'gif'
     """
     scene: str = "secant_to_tangent"
@@ -176,7 +179,9 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
             auch '720p30' usw. sind erlaubt
     fmt     'mp4' oder 'gif'
     style   'swiss' (Standard) oder '3b1b' (Farben wie bei 3Blue1Brown)
-    x0      Stelle der Tangente bzw. des Grenzwerts — für secant_to_tangent und limit_approach nötig
+    x0      Stelle der Tangente bzw. des Grenzwerts bzw. Entwicklungsstelle — für
+            secant_to_tangent, limit_approach und taylor nötig
+    n       höchster Grad der Taylor-Polynome (nur taylor), 0 … 10
     hs      Abstände h der Sekante bzw. zu x0, in der Reihenfolge der Animation
     a, b    Intervall mit Vorzeichenwechsel — für bisection nötig (a < b, f(a)·f(b) < 0)
     n       Zahl der Newton-Schritte (nur 'newton'; x0 ist dort der Startwert)
@@ -195,9 +200,11 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
     text = _f_text(f)
     xl = _xlim(xlim, None)
     x0v = None
-    if int(n) < 1:
+    if scene == "newton" and int(n) < 1:
         raise ValueError("n braucht mindestens 1 Schritt")
-    if scene in ("secant_to_tangent", "limit_approach", "newton"):
+    if scene == "taylor" and not (isinstance(n, int) and 0 <= n <= 10):
+        raise ValueError("Der Grad n muss eine ganze Zahl von 0 bis 10 sein.")
+    if scene in ("secant_to_tangent", "limit_approach", "newton", "taylor"):
         if x0 is None:
             raise ValueError(f"Für {scene} braucht es x0, die Stelle.")
         x0v = _xval(x0, "x0")[0]
@@ -1013,6 +1020,8 @@ def _build_scenes():
                      24, th.good, wait=0.8)
             self.wait(1.5)
 
+    # ===============================================================
+
     # ======================================================================
     class NewtonScene(AnaScene):
         """Newton-Verfahren: Tangente, Nullstelle der Tangente, senkrecht zurück zur Kurve."""
@@ -1076,12 +1085,76 @@ def _build_scenes():
             self.say(text, 24, col, wait=0.8)
             self.wait(1.5)
 
+=======
+    class TaylorScene(AnaScene):
+        """Taylor-Polynome T0, T1, … um x0 schmiegen sich Grad für Grad an f an."""
+
+        def construct(self):
+            import sympy as sp
+            from ..rechnen.reihen import taylor
+            th, job, fn = self.th, self.job, self.fn
+            x0, n = float(job.x0), int(job.n)
+            lo, hi = self.xlim
+            scan = _scan(fn, lo, hi)
+            ylim = tuple(job.ylim) if job.ylim else _auto_ylim(scan)
+            fr = Frame((lo, hi), ylim, 8.2, 5.0, (-2.45, -0.25), trig=fn.trig, font=self.font)
+            title = self.headline(job.title or "Taylor-Polynome: Grad für Grad an f")
+            self.play(Write(title), FadeIn(fr.axes(th)), run_time=1.4)
+            graph, _ = self.graph(fr, fn, th.accent, scan)
+            flab = self.T("f", 28, th.accent).move_to(fr.p(lo, ylim[1]) + RIGHT * 0.5 + DOWN * 0.3)
+            self.play(Create(graph), FadeIn(flab), run_time=2.0)
+
+            y0 = self.safe(fn, x0)
+            vline = DashedLine(fr.p(x0, ylim[0]), fr.p(x0, ylim[1]), dash_length=0.12,
+                               color=th.muted, stroke_width=2.5)
+            x0lab = self.T("x₀", 24, th.muted).next_to(fr.p(x0, ylim[1]), UP, buff=0.1)
+            marks = [Create(vline), FadeIn(x0lab)]
+            if y0 is not None and fr.inside(x0, y0):
+                marks.append(FadeIn(self.dot(fr.p(x0, y0), th.text, 0.11)))
+            self.play(*marks, run_time=0.8)
+            self.say("Entwicklungsstelle x₀: dort stimmen f und die Polynome überein.", wait=0.5)
+
+            xs = np.linspace(lo, hi, 600)
+            polys = [taylor(job.f, x0, k).polynomial for k in range(n + 1)]
+            shades = [th.secant, th.tangent, th.good, th.bad]
+            panel = RIGHT * 4.85
+            cur = curlab = form = None
+            for k, poly in enumerate(polys):
+                g = sp.lambdify(sp.Symbol("x"), poly, "numpy")
+                vals = np.broadcast_to(np.asarray(g(xs), dtype=float), xs.shape)
+                ok = np.isfinite(vals) & (vals >= ylim[0]) & (vals <= ylim[1])
+                pieces, i = [], 0
+                while i < len(xs):
+                    j = i
+                    while ok[i] and j < len(xs) and ok[j]:
+                        j += 1
+                    if j - i > 1:
+                        pieces.append((xs[i:j], vals[i:j]))
+                    i = max(j, i + 1)
+                col = shades[k % len(shades)]
+                new = fr.curve(pieces, col, 4)
+                nlab = self.T(f"T{k}", 26, col).move_to(panel + UP * 2.6)
+                text = sp.sstr(poly).replace("**", "^").replace("*", "·")
+                nform = self.T(f"Grad {k}" if len(text) > 40 else text, 18, col)
+                nform.move_to(panel + UP * 1.9)
+                if cur is None:
+                    self.play(Create(new), FadeIn(nlab), FadeIn(nform), run_time=1.2)
+                else:
+                    self.play(ReplacementTransform(cur, new), ReplacementTransform(curlab, nlab),
+                              ReplacementTransform(form, nform), run_time=1.4)
+                cur, curlab, form = new, nlab, nform
+                self.say(f"T{k}: Glieder (x − x₀)ᵏ bis Grad {k}.", wait=0.5)
+            self.say(f"Je höher der Grad, desto besser schmiegt sich T{n} an f an.",
+                     24, th.good, wait=0.8)
+            self.wait(1.5)
+
     return {"secant_to_tangent": SecantToTangentScene,
             "derivative_graph": DerivativeGraphScene,
             "curve_analysis": CurveAnalysisScene,
             "limit_approach": LimitApproachScene,
             "bisection": BisectionScene,
-            "newton": NewtonScene}
+            "newton": NewtonScene,
+            "taylor": TaylorScene}
 
 
 # --------------------------------------------------------------------------

@@ -225,7 +225,14 @@ if A.ak_anim:
                         NS(rows=[0, 1, 2, 3]), "newton", "low")
     check(getattr(jn, "scene", "") == "newton" and jn.n == 4 and jn.x0 == 3.0, jn)
     check(isinstance(A.anim_job_for("hoeher", {"f": "x^2"}, object(), "newton", "low"), str))
+if A.ak_anim:
+    ph = dict(A.DEFAULTS["hoeher"], action="taylor", f="exp(x)", x0="1", n="3")
+    job = A.anim_job_for("hoeher", ph, object(), "taylor", "low")
+    check(getattr(job, "scene", "") == "taylor" and job.n == 3 and job.x0 == 1.0, job)
+    job = A.anim_job_for("hoeher", dict(ph, action="higher"), object(), "taylor", "low")
+    check(isinstance(job, str), job)
 check(A.ANIM_SCENES["numerik"] == {"Bisektion": "bisection", "Newton-Verfahren": "newton"})
+check(A.ANIM_SCENES["hoeher"] == {"Taylor-Polynome": "taylor"})
 
 # Zeichnung: Mausrad zoomt, Doppelklick setzt zurück, Hover zeigt Koordinaten
 import matplotlib.pyplot as plt
