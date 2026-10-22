@@ -1020,8 +1020,6 @@ def _build_scenes():
                      24, th.good, wait=0.8)
             self.wait(1.5)
 
-    # ===============================================================
-
     # ======================================================================
     class NewtonScene(AnaScene):
         """Newton-Verfahren: Tangente, Nullstelle der Tangente, senkrecht zurück zur Kurve."""
@@ -1085,7 +1083,7 @@ def _build_scenes():
             self.say(text, 24, col, wait=0.8)
             self.wait(1.5)
 
-=======
+    # ======================================================================
     class TaylorScene(AnaScene):
         """Taylor-Polynome T0, T1, … um x0 schmiegen sich Grad für Grad an f an."""
 
