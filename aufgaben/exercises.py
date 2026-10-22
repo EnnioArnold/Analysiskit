@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Die Rechenaufgaben aus den Folien der Semesterwochen 1 bis 4.
+Die Rechenaufgaben aus den Folien der Semesterwochen 1 bis 6.
 
 Die Aufgaben stehen hier als Daten, nicht als fertige Antworten. Du holst
 dir eine Aufgabe, rechnest selbst und vergleichst — das ist der Zweck.
@@ -17,6 +17,12 @@ Beispiel von Semesterwoche 1, `SW2.5b` die zweite Teilaufgabe des fünften
 Beispiels in Semesterwoche 2. Die Aufgaben aus Papula und Hughes-Hallet
 kennt dieses Paket nicht — sie stehen nur als Leseliste (`SW1.DIY` usw.)
 mit den Seitenzahlen von den Folien.
+
+SW5 und SW6 haben auf den Folien keine ausgerechneten Beispiele. SW5.1 bis
+SW5.4 stammen aus den Notebooks der Vorlesung (newton.ipynb,
+Ableitungsfunktion.ipynb); alle anderen Aufgaben dieser beiden Wochen sind
+eigene Beispiele zum Stoff, im Titel mit „(eigenes Beispiel)“ gekennzeichnet.
+Ihre Ergebnisse sind in tests/ nachgerechnet.
 """
 
 from __future__ import annotations
@@ -394,6 +400,73 @@ _ex("SW4.6", "Ganze Kurvendiskussion",
     "zusammen.",
     {"f": _SW4_F}, "curve_discussion", "Folien 5 bis 13.")
 
+# -- Semesterwoche 5: Numerische Mathematik I ------------------------------------
+
+_ex("SW5.1", "Bisektion für x² − 1.5",
+    "Eine Nullstelle von f(x) = x² − 1.5 im Intervall [1, 4] durch Halbieren "
+    "des Intervalls bis zur Länge 10⁻⁶ bestimmen.",
+    {"f": "x^2 - 1.5", "a": "1", "b": "4", "kwargs": {"tol": 1e-6}}, "bisection",
+    "Folie 6. Funktion und Intervall wie im Notebook newton.ipynb (l = 1, r = 4).")
+
+_ex("SW5.2", "Newton-Verfahren für x² − 1.5",
+    "Eine Nullstelle von f(x) = x² − 1.5 mit dem Newton-Verfahren und "
+    "Startwert x0 = 3 bestimmen.",
+    {"f": "x^2 - 1.5", "x0": "3"}, "newton",
+    "Folie 9; Notebook newton.ipynb (Startwert 3, f'(x) = 2x).")
+
+_ex("SW5.3", "Zentrale Differenz für x³ − 5",
+    "f'(1) für f(x) = x³ − 5 mit der zentralen Differenz und h = 10⁻⁶ "
+    "näherungsweise berechnen.",
+    {"f": "x^3 - 5", "x0": "1", "kwargs": {"h": 1e-6, "kind": "zentral"}}, "numeric_diff",
+    "Folie 11; Notebook Ableitungsfunktion.ipynb.")
+
+_ex("SW5.4", "Newton-Verfahren mit numerischer Ableitung",
+    "Die Nullstelle von f(x) = x³ − 5 mit dem Newton-Verfahren (Startwert 3) "
+    "bestimmen, f' dabei zentral numerisch genähert.",
+    {"f": "x^3 - 5", "x0": "3", "kwargs": {"numerisch": True}}, "newton",
+    "Notebook Ableitungsfunktion.ipynb (dort mit festem h = 1e-9; hier mit der "
+    "optimalen Schrittweite ∛ε·max(1,|x|)).")
+
+_ex("SW5.5", "Fehler und Schrittweite (eigenes Beispiel)",
+    "Den Fehler der Vorwärtsdifferenz für f(x) = eˣ bei x0 = 1 für "
+    "h = 10⁻¹ … 10⁻¹⁶ bestimmen und die beste Schrittweite ablesen.",
+    {"f": "exp(x)", "x0": "1", "kwargs": {"kind": "vorwaerts"}}, "diff_error_table",
+    "Eigenes Beispiel zu Folie 11 (Fehlerordnung h, optimale Schrittweite √ε_Mach ≈ 1.5e−8).")
+
+# -- Semesterwoche 6: Höhere Ableitungen und Taylor -----------------------------
+
+_ex("SW6.1", "MacLaurin-Polynom von eˣ (eigenes Beispiel)",
+    "Das MacLaurin-Polynom 4. Grades von f(x) = eˣ aufstellen.",
+    {"f": "exp(x)", "n": 4}, "maclaurin",
+    "Eigenes Beispiel zur Herleitung auf Folie 7/8: aₖ = f⁽ᵏ⁾(0)/k!.")
+
+_ex("SW6.2", "MacLaurin-Polynom von sin x (eigenes Beispiel)",
+    "Das MacLaurin-Polynom 5. Grades von f(x) = sin(x) aufstellen.",
+    {"f": "sin(x)", "n": 5}, "maclaurin", "Eigenes Beispiel zu Folie 8.")
+
+_ex("SW6.3", "Taylor-Polynom von ln x um x₀ = 1 (eigenes Beispiel)",
+    "Das Taylor-Polynom 3. Grades von f(x) = ln(x) um x₀ = 1 aufstellen.",
+    {"f": "ln(x)", "x0": "1", "n": 3}, "taylor",
+    "Eigenes Beispiel zu Folie 8. Um x₀ = 0 gibt es keine Entwicklung, ln ist dort nicht definiert.")
+
+_ex("SW6.4", "Sonderfall: x⁴ an der Stelle 0 (eigenes Beispiel)",
+    "Art des kritischen Punkts von f(x) = x⁴ bei x₀ = 0 bestimmen, obwohl f''(0) = 0 ist.",
+    {"f": "x^4", "x0": "0"}, "higher_order_test",
+    "Folie 5, Sonderfälle: erste nichtverschwindende Ableitung f⁽⁴⁾(0) = 24 > 0, k gerade ⇒ Minimum.")
+
+_ex("SW6.5", "Sonderfall: x³ an der Stelle 0 (eigenes Beispiel)",
+    "Art des kritischen Punkts von f(x) = x³ bei x₀ = 0 bestimmen.",
+    {"f": "x^3", "x0": "0"}, "higher_order_test",
+    "Folie 5: erste nichtverschwindende Ableitung f‴(0) = 6, k ungerade ⇒ Wendepunkt "
+    "mit waagerechter Tangente (Sattelpunkt).")
+
+_ex("SW6.6", "Funktionsüberblick zu x²/(x − 1) (eigenes Beispiel)",
+    "Definitions- und Wertebereich, Symmetrie, Nullstellen, Pole und Asymptoten "
+    "von f(x) = x²/(x − 1) bestimmen.",
+    {"f": "x^2/(x-1)"}, "curve_basics",
+    "Folie 3 (Lernziele der Kurvendiskussion). Ableitungen, Extrema und Wendepunkte "
+    "dazu: SW4.6 bzw. curve_discussion.")
+
 
 # -- Do It Yourself: Verweise ohne Lösung --------------------------------------
 
@@ -463,6 +536,35 @@ _diy("SW4.DIY", [
     "Lösung Seite 775 (14. Aufl.), 789 (16. Aufl.)",
     "Kapitel IV, Abschnitt 3: Aufgaben 11), 12 a) – 12 f) — Seite 419 (14. Aufl.), "
     "431 (16. Aufl.); Lösungen Seite 777 (14. Aufl.), 791 (16. Aufl.)",
+])
+
+_diy("SW5.DIY", [
+    "Newton-Verfahren: Studyflix, Wikipedia, Daniel Jung (YouTube)",
+    "Papula Band 1, Kapitel IV: Seiten 406 – 413 (14. Aufl.), 418 – 425 (16. Aufl.), "
+    "ohne Konvergenzkriterien",
+    "Bisektion: Wikipedia",
+    "Numerische Differentiation und Fehlerordnung: Wikipedia",
+], [
+    "Papula Band 1, Kapitel IV, Abschnitt 3: Aufgabe 27 c) — Seite 421 (14. Aufl.), "
+    "433 (16. Aufl.); Lösung Seite 786 (14. Aufl.), 800 (16. Aufl.)",
+])
+
+_diy("SW6.DIY", [
+    "Höhere Ableitungen: Papula Band 1, Kapitel IV, Abschnitt 2.11 — Seiten 352 – 353 und "
+    "388 – 393 (14. Aufl.), 364 – 365 und 400 – 405 (16. Aufl.)",
+    "Kurvendiskussion: Papula Band 1, Kapitel IV, Abschnitt 3.6 — Seiten 400 – 406 (14. Aufl.), "
+    "412 – 418 (16. Aufl.)",
+    "Asymptoten und Polstellen: Papula Band 1, Kapitel III, Abschnitt 6.3 — Seiten 218 – 221 "
+    "(14. Aufl.), 219 – 222 (16. Aufl.)",
+    "Taylor- und MacLaurin-Polynome: Papula Band 1, Kapitel VI, Abschnitt 3 bis 3.2.3 — "
+    "Seiten 597 – 609 (14. Aufl.), 609 – 621 (16. Aufl.)",
+], [
+    "Höhere Ableitungen: Kapitel IV, Abschnitt 2, Aufgabe 16 — Seite 417 (14. Aufl.), "
+    "429 (16. Aufl.); Lösungen Seite 784 (16. Aufl.)",
+    "Kurvendiskussion: Kapitel IV, Abschnitt 3, selbstausgesuchte Aufgaben aus 24 a) – 24 g) — "
+    "Seite 420 (14. Aufl.), 432 (16. Aufl.); Lösungen Seiten 794 – 797 (16. Aufl.)",
+    "Taylor- und MacLaurin-Polynome: Kapitel VI, Abschnitt 3, Aufgaben 1 c), 5 b), 5 c) und 6) — "
+    "Seiten 635 – 636 (14. Aufl.), 647 – 648 (16. Aufl.); Lösungen Seiten 827 – 828 (16. Aufl.)",
 ])
 
 
@@ -568,9 +670,9 @@ class TripleProductResult(Result):
 
 def _lookup():
     """Alle Verfahren, die als `method` vorkommen dürfen."""
-    from ..rechnen import analysis, derivative, limits, steigung
+    from ..rechnen import analysis, derivative, kurve, limits, numerik, reihen, steigung
     table = {}
-    for mod in (steigung, limits, derivative, analysis):
+    for mod in (steigung, limits, derivative, analysis, numerik, kurve, reihen):
         for name in dir(mod):
             if not name.startswith("_") and callable(getattr(mod, name)):
                 table[name] = getattr(mod, name)
@@ -603,6 +705,14 @@ _ARGS: dict[str, list[str]] = {
     "extrema": ["f"],
     "inflection_points": ["f"],
     "curve_discussion": ["f"],
+    "bisection": ["f", "a", "b"],
+    "newton": ["f", "x0"],
+    "numeric_diff": ["f", "x0"],
+    "diff_error_table": ["f", "x0"],
+    "curve_basics": ["f"],
+    "higher_order_test": ["f", "x0"],
+    "taylor": ["f", "x0", "n"],
+    "maclaurin": ["f", "n"],
     "triple_product": [],
 }
 

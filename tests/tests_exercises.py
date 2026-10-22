@@ -38,14 +38,14 @@ R = sp.Rational
 # 1. Aufgaben: Aufbau
 # --------------------------------------------------------------------------
 print("Aufgaben: Aufbau")
-check(len(EXERCISES) >= 55, f"zu wenige Aufgaben: {len(EXERCISES)}")
+check(len(EXERCISES) >= 70, f"zu wenige Aufgaben: {len(EXERCISES)}")
 for key, ex in EXERCISES.items():
     check(isinstance(ex, Exercise) and ex.key == key, f"{key}: Schlüssel stimmt nicht")
     check(ex.week == key.split(".")[0], f"{key}: Woche passt nicht")
     check(ex.title and ex.task, f"{key}: Titel oder Aufgabentext fehlt")
     repr(ex)
     check(isinstance(ex._repr_html_(), str), f"{key}: _repr_html_")
-for w in ("SW1", "SW2", "SW3", "SW4"):
+for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6"):
     l = liste(w)
     check(len(l) >= 5, f"{w}: zu wenige Einträge")
     check(all(k.startswith(w + ".") for k in l), f"{w}: fremde Schlüssel")
@@ -76,7 +76,9 @@ for k in ("SW1.1", "SW1.3", "SW1.4", "SW1.5a", "SW1.5b", "SW1.6a", "SW1.6b", "SW
           "SW1.6d", "SW1.7a", "SW1.7b", "SW2.2", "SW2.3a", "SW2.3b", "SW2.4a", "SW2.4b",
           "SW2.4c", "SW2.5a", "SW2.6", "SW2.7a", "SW2.7b", "SW2.8a", "SW2.8b", "SW2.11",
           "SW3.1", "SW3.2", "SW3.3a", "SW3.3b", "SW3.4", "SW3.5", "SW3.6a", "SW3.6b",
-          "SW3.7", "SW4.1", "SW4.2", "SW4.3", "SW4.4", "SW4.5", "SW4.6"):
+          "SW3.7", "SW4.1", "SW4.2", "SW4.3", "SW4.4", "SW4.5", "SW4.6",
+          "SW5.1", "SW5.2", "SW5.3", "SW5.4", "SW5.5", "SW6.1", "SW6.2", "SW6.3", "SW6.4",
+          "SW6.5", "SW6.6"):
     check(k in EXERCISES, f"Pflichtaufgabe {k} fehlt")
 
 # Leseliste
@@ -108,7 +110,7 @@ for key, res in alle.items():
     check(getattr(res, "steps", None), f"{key}: Ergebnis ohne Schritte")
     repr(res)
     check(isinstance(res._repr_html_(), str), f"{key}: Ergebnis _repr_html_")
-for w in ("SW1", "SW2", "SW3", "SW4"):
+for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6"):
     check(set(loese_alle(w)) == {k for k in rechen if k.startswith(w + ".")}, f"loese_alle({w})")
 
 # --------------------------------------------------------------------------
@@ -185,6 +187,18 @@ check([p[0] for p in e.minima] == [R(3, 5)], "SW4.5: Minimum bei 3/5")
 check([p[0] for p in e.maxima] == [-1], "SW4.5: Maximum bei -1")
 check([p[0] for p in e.saddles] == [3], "SW4.5: Sattelpunkt bei 3")
 check(val("SW1.4", decimal=True).decimal, "decimal=True")
+
+# SW5/SW6: Werte unabhängig nachgerechnet (siehe tests_numerik / tests_reihen)
+check(abs(val("SW5.1").root - 1.5 ** 0.5) < 1e-6, "SW5.1: Bisektion √1.5")
+check(abs(val("SW5.2").root - 1.5 ** 0.5) < 1e-12, "SW5.2: Newton √1.5")
+check(abs(val("SW5.3").approx - 3) < 1e-9, "SW5.3: f'(1) = 3")
+check(abs(val("SW5.4").root - 5 ** (1 / 3)) < 1e-9, "SW5.4: Newton ∛5")
+check(1e-9 <= val("SW5.5").best_h <= 1e-7, "SW5.5: beste Schrittweite ≈ 1e-8")
+check(gleich(val("SW6.1").polynomial, 1 + x + x**2 / 2 + x**3 / 6 + x**4 / 24), "SW6.1: MacLaurin e^x")
+check(gleich(val("SW6.2").polynomial, x - x**3 / 6 + x**5 / 120), "SW6.2: MacLaurin sin")
+check(gleich(val("SW6.3").polynomial, (x - 1) - (x - 1)**2 / 2 + (x - 1)**3 / 3), "SW6.3: Taylor ln")
+check(val("SW6.4").kind == "relatives Minimum" and val("SW6.5").kind == "Sattelpunkt", "SW6.4/6.5: Sonderfälle")
+check(val("SW6.6").lines == [x + 1], "SW6.6: schräge Asymptote y = x + 1")
 
 # --------------------------------------------------------------------------
 # 4. Prüfstand: Beispiellösungen (nur hier, nicht im Paket)

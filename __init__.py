@@ -2,9 +2,9 @@
 """
 anakit — Grundlagen der Analysis mit nachvollziehbarem Rechenweg.
 
-Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 4: Sekanten und
+Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 6: Sekanten und
 Tangenten, Grenzwert und Stetigkeit, Ableitungsregeln, Monotonie und
-Extrema). Alles rechnet exakt (SymPy) und zeigt jeden Schritt so, wie er in
+Extrema, Numerik, höhere Ableitungen und Taylor). Alles rechnet exakt (SymPy) und zeigt jeden Schritt so, wie er in
 der Prüfung auf dem Papier stünde.
 
 Kurzübersicht
@@ -23,6 +23,14 @@ Kurzübersicht
     rule_table()                         # SW3: Regeltabelle Newton/Leibniz
 
     curve_discussion("x^5-7x^4+10x^3+18x^2-27x-27")   # SW4
+
+    bisection("x^2 - 1.5", 1, 4)         # SW5: Nullstelle durch Halbieren
+    newton("x^2 - 1.5", 3)               # SW5: Newton-Verfahren
+    numeric_diff("x^3 - 5", 1)           # SW5: numerisch differenzieren
+
+    curve_basics("x^2/(x-1)")            # SW6: Pole, Asymptoten, Symmetrie
+    higher_order_test("x^4", 0)          # SW6: erste nichtverschwindende Ableitung
+    maclaurin("exp(x)", 4)               # SW6: MacLaurin-Polynom
 
 Jedes Ergebnis zeigt sich im Notebook von selbst. `.as_decimal()` schaltet
 auf Dezimalzahlen um, `.latex()` liefert den Rechenweg zum Einfügen in eine
@@ -50,9 +58,16 @@ from .rechnen.analysis import (CriticalResult, CurvatureResult, DiscussionResult
                        ExtremaResult, InflectionResult, MonotonyResult,
                        critical_points, curvature, curve_discussion, extrema,
                        inflection_points, monotony)
-from .grafik.plots import (has_plotly, plot_curve, plot_derivative, plot_function,
-                    plot_limit, plot_secant, plot_secants_to_tangent,
-                    plot_tangent, plotly_function)
+from .rechnen.numerik import (BisectionResult, DiffErrorTableResult, NewtonResult,
+                       NumDiffResult, bisection, diff_error_table, newton,
+                       numeric_diff, optimal_step)
+from .rechnen.kurve import (CurveBasicsResult, HigherOrderResult, curve_basics,
+                    higher_order_test)
+from .rechnen.reihen import TaylorResult, maclaurin, taylor
+from .grafik.plots import (has_plotly, plot_bisection, plot_curve, plot_derivative,
+                    plot_function, plot_limit, plot_newton, plot_secant,
+                    plot_secants_to_tangent, plot_tangent, plot_taylor,
+                    plotly_function)
 
 # Die Module liegen in Unterordnern; die alten Namen (anakit.core, anakit.anim,
 # anakit.exercises, …) bleiben als Alias erhalten, damit Notebooks weiter laufen.
@@ -60,6 +75,8 @@ import importlib as _il, sys as _sys
 for _alias, _real in (("core", "rechnen.core"), ("render", "rechnen.render"),
                       ("steigung", "rechnen.steigung"), ("limits", "rechnen.limits"),
                       ("derivative", "rechnen.derivative"), ("analysis", "rechnen.analysis"),
+                      ("numerik", "rechnen.numerik"), ("kurve", "rechnen.kurve"),
+                      ("reihen", "rechnen.reihen"),
                       ("plots", "grafik.plots"), ("anim", "grafik.anim"),
                       ("exercises", "aufgaben.exercises"), ("uebung", "aufgaben.uebung")):
     _m = _il.import_module(f"{__name__}.{_real}")
@@ -87,9 +104,14 @@ __all__ = [
     # SW4 Monotonie und Extrema
     "monotony", "critical_points", "curvature", "extrema", "inflection_points",
     "curve_discussion",
+    # SW5 Numerische Mathematik I
+    "bisection", "newton", "numeric_diff", "optimal_step", "diff_error_table",
+    # SW6 Höhere Ableitungen, Kurvendiskussion, Taylor
+    "curve_basics", "higher_order_test", "taylor", "maclaurin",
     # Zeichnen
     "plot_function", "plot_secant", "plot_secants_to_tangent", "plot_tangent",
-    "plot_derivative", "plot_curve", "plot_limit", "plotly_function", "has_plotly",
+    "plot_derivative", "plot_curve", "plot_limit", "plot_bisection", "plot_newton",
+    "plot_taylor", "plotly_function", "has_plotly",
 ]
 
 
@@ -110,10 +132,15 @@ def info() -> str:
         "SW4 Monotonie und Extrema:",
         "  monotony, critical_points, curvature, extrema, inflection_points,",
         "  curve_discussion",
+        "SW5 Numerische Mathematik I:",
+        "  bisection, newton, numeric_diff, optimal_step, diff_error_table",
+        "SW6 Höhere Ableitungen und Taylor:",
+        "  curve_basics, higher_order_test, taylor, maclaurin",
         "",
         "Zeichnen:",
         "  plot_function, plot_secant, plot_secants_to_tangent, plot_tangent,",
-        "  plot_derivative, plot_curve, plot_limit",
+        "  plot_derivative, plot_curve, plot_limit,",
+        "  plot_bisection, plot_newton, plot_taylor",
         f"  Plotly für Interaktives: {'vorhanden' if has_plotly() else 'fehlt'}",
         "",
         "Jedes Ergebnis kennt .as_decimal(), .as_exact(), .latex(), .show(), .figure().",
