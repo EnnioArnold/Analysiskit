@@ -36,6 +36,7 @@ from ..rechnen.core import fmt, parse, to_callable, x as X_SYMBOL
 __all__ = [
     "plot_function", "plot_secant", "plot_secants_to_tangent", "plot_tangent",
     "plot_derivative", "plot_curve", "plot_limit",
+    "plot_bisection", "plot_newton", "plot_taylor",
     "has_plotly", "plotly_function", "save_html", "COLORS",
 ]
 
@@ -1452,6 +1453,111 @@ def plot_limit(f, x0, xlim=None, dark=False):
         _title(ax, th, f"Grenzwert für x → {l0}")
         ax.text(0.0, -0.13, "\n".join(lines), transform=ax.transAxes, ha="left", va="top",
                 fontsize=10, color=th["fg"], linespacing=1.5)
+        return _finish(fig)
+
+
+# ==========================================================================
+# Numerik (SW5) und Taylor (SW6)
+# ==========================================================================
+
+def plot_bisection(f, a, b, rows, dark=False, xlim=None):
+    """
+    Bisektion: oben der Graph mit den Intervallmitten, darunter die Intervalle
+    [a_k, b_k] als Balken (Zeile k). `rows` sind die Zeilen (k, a_k, b_k, m_k, f(m_k))
+    aus `bisection(...).rows`; höchstens die ersten 12 Schritte werden gezeichnet.
+    """
+    _m, plt = _plt()
+    th = _theme(dark)
+    fn = _Fn(f)
+    shown = list(rows[:12])
+    span = float(b) - float(a)
+    lo, hi = _xlim(xlim, None) or (float(a) - 0.05 * span, float(b) + 0.05 * span)
+    with plt.rc_context(th["rc"]):
+        fig, (a0, a1) = plt.subplots(2, 1, figsize=(7.6, 6.4), sharex=True,
+                                     gridspec_kw={"height_ratios": [3, 2]}, layout="constrained")
+        sc = _scan(fn, lo, hi)
+        _draw(a0, th, sc, th["f"])
+        for k, ak_, bk, mk, fm in shown:
+            _closed_dot(a0, th, th["tan"], mk, fm, size=5.5, z=8)
+        a0.set_ylim(*_auto_ylim(sc, include=[0]))
+        _style(a0, th, lo, hi, trig=fn.trig, xlabel="", ylabel="y")
+        _title(a0, th, f"Bisektion auf [{_num(a)}, {_num(b)}]",
+               f"x_N ≈ {_num(rows[-1][3], 6)} nach {len(rows) - 1} Halbierungen")
+        for k, ak_, bk, mk, fm in shown:
+            a1.plot([ak_, bk], [-k, -k], color=th["fg"], lw=3, solid_capstyle="butt")
+            a1.plot([mk], [-k], "|", color=th["tan"], ms=9, mew=2)
+        a1.set_ylabel("Schritt k", loc="top", rotation=0, labelpad=26)
+        a1.set_yticks([-k for k, *_ in shown])
+        a1.set_yticklabels([str(k) for k, *_ in shown])
+        a1.grid(True, color=th["grid"], lw=0.7)
+        for side in ("top", "right"):
+            a1.spines[side].set_visible(False)
+        a1.set_xlim(lo, hi)
+        a1.set_xlabel("x", loc="right")
+        return _finish(fig)
+
+
+def plot_newton(f, rows, dark=False, xlim=None):
+    """
+    Newton-Verfahren: Tangenten in x_k (rot) und ihre Nullstellen x_{k+1}.
+    `rows` sind die Zeilen (k, x_k, f(x_k), f'(x_k), x_{k+1}) aus `newton(...).rows`.
+    """
+    _m, plt = _plt()
+    th = _theme(dark)
+    fn = _Fn(f)
+    shown = list(rows[:8])
+    pts = [r[1] for r in shown] + [shown[-1][4]]
+    pad = max(0.5, 0.25 * (max(pts) - min(pts)))
+    lo, hi = _xlim(xlim, None) or (min(pts) - pad, max(pts) + pad)
+    with plt.rc_context(th["rc"]):
+        fig, ax = plt.subplots(figsize=(7.4, 5.0), layout="constrained")
+        sc = _scan(fn, lo, hi)
+        _draw(ax, th, sc, th["f"])
+        ys = [0.0]
+        for k, xk, fx, dfx, nxt in shown:
+            ys.append(fx)
+            ax.plot([xk, xk], [0, fx], color=th["muted"], lw=1.0, ls=(0, (3, 3)), zorder=3)
+            if np.isfinite(dfx) and dfx != 0:
+                ax.plot([xk, nxt], [fx, 0], color=th["tan"], lw=1.8, zorder=4)
+            _closed_dot(ax, th, th["tan"], xk, fx, size=5.5, z=8)
+            _annot(ax, th, xk, 0, f"x{str(k).translate(_SUB)}", 0, -14, ha="center", va="top",
+                   size=9, color=th["tan"])
+        _closed_dot(ax, th, th["fg"], shown[-1][4], 0, size=7, z=9)
+        yl = _auto_ylim(sc, include=ys)
+        _style(ax, th, lo, hi, trig=fn.trig)
+        ax.set_ylim(*yl)
+        _title(ax, th, "Newton-Verfahren: Tangente, Nullstelle der Tangente, wieder von vorn",
+               f"x_N ≈ {_num(shown[-1][4], 8)}")
+        return _finish(fig)
+
+
+def plot_taylor(f, x0=0, orders=(1, 3, 5), xlim=None, dark=False):
+    """
+    Graph von f und die Taylor-Polynome T_n um x0 für die gegebenen Grade
+    (n = 0 ist die waagrechte Gerade durch den Entwicklungspunkt).
+    """
+    from ..rechnen.reihen import taylor
+    _m, plt = _plt()
+    th = _theme(dark)
+    fn = _Fn(f)
+    x0v, l0 = _xval(x0, "x0")
+    lo, hi = _xlim(xlim, None) or (x0v - 4, x0v + 4)
+    shades = [th["sec"], th["tan"], th["sec2"], th["d2"]]
+    with plt.rc_context(th["rc"]):
+        fig, ax = plt.subplots(figsize=(7.6, 5.0), layout="constrained")
+        sc = _scan(fn, lo, hi)
+        yl = _auto_ylim(sc, include=[_at(fn, x0v, "x0")])
+        _draw(ax, th, sc, th["f"], lw=2.6, label="f")
+        xs = np.linspace(lo, hi, 600)
+        for i, n in enumerate(orders):
+            tn = _Fn(taylor(f, x0, int(n)).polynomial)
+            ax.plot(xs, tn(xs), color=shades[i % len(shades)], lw=1.8,
+                    ls=(0, (5, 2)) if i % 2 else "-", label=f"T{str(n).translate(_SUB)}", zorder=4)
+        _closed_dot(ax, th, th["pt"], x0v, _at(fn, x0v, "x0"), size=7, z=9)
+        _style(ax, th, lo, hi, trig=fn.trig)
+        ax.set_ylim(*yl)
+        ax.legend(loc="upper left", frameon=False, fontsize=9, labelcolor=th["fg"])
+        _title(ax, th, f"Taylor-Polynome um x₀ = {l0}", "T_n(x) = Σ f⁽ᵏ⁾(x₀)/k! · (x − x₀)ᵏ")
         return _finish(fig)
 
 
