@@ -220,7 +220,12 @@ if A.ak_anim:
     check(isinstance(A.anim_job_for("numerik", dict(bp, action="newton"), object(), "bisection", "low"), str))
     check(isinstance(A.anim_job_for("hoeher", bp, object(), "bisection", "low"), str))
     check(isinstance(A.anim_job_for("numerik", dict(bp, f="x^2+1"), object(), "bisection", "low"), str))
-check(A.ANIM_SCENES["numerik"] == {"Bisektion": "bisection"})
+    from types import SimpleNamespace as NS
+    jn = A.anim_job_for("numerik", {"f": "x^2-2", "action": "newton", "x0": "3"},
+                        NS(rows=[0, 1, 2, 3]), "newton", "low")
+    check(getattr(jn, "scene", "") == "newton" and jn.n == 4 and jn.x0 == 3.0, jn)
+    check(isinstance(A.anim_job_for("hoeher", {"f": "x^2"}, object(), "newton", "low"), str))
+check(A.ANIM_SCENES["numerik"] == {"Bisektion": "bisection", "Newton-Verfahren": "newton"})
 
 # Zeichnung: Mausrad zoomt, Doppelklick setzt zurück, Hover zeigt Koordinaten
 import matplotlib.pyplot as plt
