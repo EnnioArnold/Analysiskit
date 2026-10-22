@@ -2907,6 +2907,7 @@ ANIM_SCENES = {
     "limits": {"x nähert sich x₀": "limit_approach"},
     "derivative": {"f und f′": "derivative_graph"},
     "curve": {"Kurvendiskussion": "curve_analysis"},
+    "numerik": {"Bisektion": "bisection"},
 }
 
 
@@ -3777,8 +3778,8 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     if ak_anim is None:
         return ("Die Animation (anim.py) ist in diesem Ordner nicht vorhanden. "
                 "Sie ist freiwillig; alles andere funktioniert auch ohne.")
-    if page in ("numerik", "hoeher"):
-        return ("Zu dieser Seite gibt es noch keine Animation — Rechenweg und Zeichnung "
+    if page == "hoeher" or (page == "numerik" and p.get("action") != "bisect"):
+        return ("Zu dieser Aufgabe gibt es noch keine Animation — Rechenweg und Zeichnung "
                 "zeigen das Ergebnis.")
     if not scene:
         return "Zu dieser Seite gibt es keine Animation."
@@ -3798,6 +3799,12 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
             kw["x0"] = float(x0)
         except Exception as exc:
             return f"Die Animation braucht eine Stelle x₀: {exc}"
+    if scene == "bisection":
+        try:
+            kw["a"] = float(read_number(p.get("a") or "", "die linke Grenze a"))
+            kw["b"] = float(read_number(p.get("b") or "", "die rechte Grenze b"))
+        except Exception as exc:
+            return f"Die Animation braucht das Intervall a, b: {exc}"
     if scene == "curve_analysis":
         try:
             lo, hi = p.get("a", "").strip(), p.get("b", "").strip()

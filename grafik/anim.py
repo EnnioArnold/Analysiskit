@@ -57,14 +57,16 @@ QUALITIES = {
 #: Auch die Auflösung selbst ist als Name erlaubt: quality="1080p60".
 QUALITY_ALIASES = {v[0]: k for k, v in QUALITIES.items()}
 
-SCENES = ("secant_to_tangent", "derivative_graph", "curve_analysis", "limit_approach")
+SCENES = ("secant_to_tangent", "derivative_graph", "curve_analysis", "limit_approach",
+          "bisection")
 SCENE_NAMES = {"secant_to_tangent": "SecantToTangentScene",
                "derivative_graph": "DerivativeGraphScene",
                "curve_analysis": "CurveAnalysisScene",
-               "limit_approach": "LimitApproachScene"}
+               "limit_approach": "LimitApproachScene",
+               "bisection": "BisectionScene"}
 #: Ungefähre Zahl der Teilanimationen, für den Fortschrittsbalken.
 _EXPECTED = {"secant_to_tangent": 14, "derivative_graph": 12, "curve_analysis": 18,
-             "limit_approach": 12}
+             "limit_approach": 12, "bisection": 30}
 
 
 @dataclass
@@ -115,6 +117,7 @@ class AnimationJob:
               'x^2 if x<1 else x-1')
     x0      — Stelle der Tangente bzw. des Grenzwerts (secant_to_tangent, limit_approach)
     hs      — die Abstände h, nacheinander (secant_to_tangent, limit_approach)
+    a, b    — Intervallgrenzen mit Vorzeichenwechsel (bisection)
     xlim/ylim — Ausschnitt; None heisst automatisch
     fmt     — 'mp4' oder 'gif'
     """
@@ -124,6 +127,8 @@ class AnimationJob:
     hs: list[float] = field(default_factory=lambda: [2.0, 1.0, 0.5, 0.25, 0.1])
     xlim: list[float] | None = None
     ylim: list[float] | None = None
+    a: float | None = None
+    b: float | None = None
     title: str = ""
     theme: Theme = field(default_factory=Theme)
     quality: str = "low"
@@ -158,7 +163,7 @@ def _f_text(f) -> str:
 
 def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
               xlim=None, ylim=None, hs=None, dark: bool = False, title: str = "",
-              theme: Theme | None = None, style: str = "swiss") -> AnimationJob:
+              theme: Theme | None = None, style: str = "swiss", a=None, b=None) -> AnimationJob:
     """
     Baut einen Auftrag; rechnen und zeichnen tut erst render().
 
@@ -170,6 +175,7 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
     style   'swiss' (Standard) oder '3b1b' (Farben wie bei 3Blue1Brown)
     x0      Stelle der Tangente bzw. des Grenzwerts — für secant_to_tangent und limit_approach nötig
     hs      Abstände h der Sekante bzw. zu x0, in der Reihenfolge der Animation
+    a, b    Intervall mit Vorzeichenwechsel — für bisection nötig (a < b, f(a)·f(b) < 0)
     """
     quality = QUALITY_ALIASES.get(quality, quality)
     if scene not in SCENE_NAMES:
@@ -191,6 +197,23 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
         x0v = _xval(x0, "x0")[0]
         if xl is None:
             xl = (x0v - 3.0, x0v + 3.0)
+    av = bv = None
+    if scene == "bisection":
+        if a is None or b is None:
+            raise ValueError("Für bisection braucht es das Intervall a, b.")
+        av, bv = _xval(a, "a")[0], _xval(b, "b")[0]
+        if not av < bv:
+            raise ValueError("Für die Bisektion muss a < b gelten.")
+        import numpy as np
+        fab = _Fn(text)(np.array([av, bv]))
+        if not np.all(np.isfinite(fab)):
+            raise ValueError("f ist an a oder b nicht definiert")
+        if fab[0] * fab[1] > 0:
+            raise ValueError("f(a) und f(b) haben dasselbe Vorzeichen: ohne "
+                             "Vorzeichenwechsel keine Bisektion.")
+        if xl is None:
+            pad = 0.15 * (bv - av)
+            xl = (av - pad, bv + pad)
     hlist = [float(v) for v in (hs if hs is not None else (2, 1, 0.5, 0.25, 0.1))
              if float(v) != 0.0]
     if scene in ("secant_to_tangent", "limit_approach") and not hlist:
@@ -207,7 +230,7 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
         if yl[0] >= yl[1]:
             raise ValueError("ylim muss ein Paar (unten, oben) mit unten < oben sein")
     return AnimationJob(
-        scene=scene, f=text, x0=x0v, hs=hlist,
+        scene=scene, f=text, x0=x0v, hs=hlist, a=av, b=bv,
         xlim=list(xl) if xl else None, ylim=list(yl) if yl else None,
         title=title, theme=theme or (Theme.b3b1() if style == "3b1b"
                         else Theme.dark() if dark else Theme()),
@@ -911,10 +934,84 @@ def _build_scenes():
             self.say(text, 24, col, wait=0.8)
             self.wait(1.5)
 
+    # ======================================================================
+    class BisectionScene(AnaScene):
+        """Bisektion: Intervall mit Vorzeichenwechsel wird Schritt für Schritt halbiert."""
+
+        def construct(self):
+            th, job, fn = self.th, self.job, self.fn
+            a0, b0 = float(job.a), float(job.b)
+            from ..rechnen.numerik import bisection
+            # 7 Halbierungen zeigen den Ablauf; mehr wäre nur Wiederholung.
+            res = bisection(job.f, a0, b0, (b0 - a0) / 2 ** 7)
+            rows = res.rows[:-1]
+            lo, hi = self.xlim
+            scan = _scan(fn, lo, hi)
+            ylim = tuple(job.ylim) if job.ylim else _auto_ylim(
+                scan, include=[0.0] + [v for v in (self.safe(fn, a0), self.safe(fn, b0))
+                                       if v is not None])
+            fr = Frame((lo, hi), ylim, 8.2, 5.0, (-2.45, -0.25), trig=fn.trig, font=self.font)
+            title = self.headline(job.title or "Die Bisektion: das Intervall wird halbiert")
+            self.play(Write(title), FadeIn(fr.axes(th)), run_time=1.4)
+            graph, _ = self.graph(fr, fn, th.accent, scan)
+            self.play(Create(graph), run_time=2.0)
+
+            def y_at(x):
+                return min(max(self.safe(fn, x, 0.0), ylim[0]), ylim[1])
+
+            def bracket(a, b, m=None):
+                g = VGroup()
+                for x, c in ((a, th.secant), (b, th.tangent)):
+                    g.add(DashedLine(fr.p(x, 0), fr.p(x, y_at(x)), dash_length=0.1,
+                                     color=c, stroke_width=3), self.dot(fr.p(x, y_at(x)), c))
+                g.add(Line(fr.p(a, 0), fr.p(b, 0), color=th.good, stroke_width=8))
+                if m is not None:
+                    g.add(DashedLine(fr.p(m, 0), fr.p(m, y_at(m)), dash_length=0.1,
+                                     color=th.muted, stroke_width=2.5),
+                          self.dot(fr.p(m, y_at(m)), th.muted, 0.12))
+                return g
+
+            cur = bracket(a0, b0)
+            self.play(FadeIn(cur), run_time=0.8)
+            self.say("f(a) und f(b) haben verschiedene Vorzeichen: dazwischen liegt eine Nullstelle.",
+                     22, wait=0.8)
+
+            panel = RIGHT * 4.85
+            head = self.T("k:  [aₖ, bₖ]  →  mₖ", 20, th.muted).move_to(panel + UP * 2.6)
+            self.play(FadeIn(head), run_time=0.4)
+            table = VGroup()
+            table_left = np.array([2.75, 2.2, 0.0])
+            for i, (k, a, b, m, fm) in enumerate(rows):
+                new = bracket(a, b, m)
+                self.play(ReplacementTransform(cur, new), run_time=0.7)
+                cur = new
+                fa = self.safe(fn, a, 0.0)
+                left = fa * fm <= 0
+                r = self.T(f"{k}:  [{_num(a, 4)}, {_num(b, 4)}] → {_num(m, 4)}", 18)
+                table.add(r)
+                table.arrange(DOWN, aligned_edge=LEFT, buff=0.16)
+                table.align_to(table_left, LEFT).align_to(table_left, UP)
+                self.play(FadeIn(r), run_time=0.3)
+                self.say(f"Mitte m = {_num(m, 4)}, f(m) = {_num(fm, 3)}: "
+                         + ("Wechsel links, die rechte Hälfte fällt weg." if left
+                            else "Kein Wechsel links, die linke Hälfte fällt weg."), 22,
+                         wait=0.3 if k else 0.8)
+                nxt = rows[i + 1][1:3] if i + 1 < len(rows) else res.last_interval
+                shrunk = bracket(nxt[0], nxt[1])
+                self.play(ReplacementTransform(cur, shrunk), run_time=0.7)
+                cur = shrunk
+            x = res.root
+            fin = self.dot(fr.p(x, 0), th.good, 0.14)
+            self.play(FadeIn(fin), Indicate(fin, color=th.good), run_time=1.0)
+            self.say(f"Nach {res.iterations} Halbierungen: Nullstelle x ≈ {_num(x, 5)}.",
+                     24, th.good, wait=0.8)
+            self.wait(1.5)
+
     return {"secant_to_tangent": SecantToTangentScene,
             "derivative_graph": DerivativeGraphScene,
             "curve_analysis": CurveAnalysisScene,
-            "limit_approach": LimitApproachScene}
+            "limit_approach": LimitApproachScene,
+            "bisection": BisectionScene}
 
 
 # --------------------------------------------------------------------------

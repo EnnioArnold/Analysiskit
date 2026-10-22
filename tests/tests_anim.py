@@ -15,11 +15,16 @@ def raises(exc, fn, *a, **k):
 
 # (a) Aufträge
 for s in anim.SCENES:
-    j = build_job(s, "x^2", x0=1)
+    j = build_job(s, "x^2-2" if s == "bisection" else "x^2", x0=1, a=1, b=2)
     assert j.scene == s and j.f and j.quality == "low" and j.fmt == "mp4"
     assert AnimationJob.from_json(j.to_json()) == j, s
 assert build_job("limit_approach", "(x^2-1)/(x-1)", x0=1).x0 == 1.0
 assert raises(ValueError, build_job, "nix", "x^2", x0=1)
+jb = build_job("bisection", "x^2-2", a=1, b=2)
+assert (jb.a, jb.b) == (1.0, 2.0) and jb.xlim[0] < 1 and jb.xlim[1] > 2
+assert raises(ValueError, build_job, "bisection", "x^2-2")                # a, b fehlen
+assert raises(ValueError, build_job, "bisection", "x^2+1", a=0, b=1)      # kein Vorzeichenwechsel
+assert raises(ValueError, build_job, "bisection", "x^2-2", a=2, b=1)      # a >= b
 for s in ("limit_approach", "secant_to_tangent"):
     assert raises(ValueError, build_job, s, "x^2"), s
 
@@ -49,6 +54,8 @@ if ok:
     p = anim.render(build_job("limit_approach", "(x^2-1)/(x-1)", x0=1, quality="low"))
     assert os.path.exists(p) and str(p).endswith(".mp4") and os.path.getsize(p) > 0, p
     print("Rendering ok:", anim.engine(), p)
+    p = anim.render(build_job("bisection", "x^2-2", a=1, b=2, quality="low"))
+    assert os.path.exists(p) and os.path.getsize(p) > 0, p
 else:
     print("Rendering übersprungen:", why)
 print("alle Tests bestanden")
