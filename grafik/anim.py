@@ -57,14 +57,16 @@ QUALITIES = {
 #: Auch die Auflösung selbst ist als Name erlaubt: quality="1080p60".
 QUALITY_ALIASES = {v[0]: k for k, v in QUALITIES.items()}
 
-SCENES = ("secant_to_tangent", "derivative_graph", "curve_analysis", "limit_approach")
+SCENES = ("secant_to_tangent", "derivative_graph", "curve_analysis", "limit_approach",
+          "newton")
 SCENE_NAMES = {"secant_to_tangent": "SecantToTangentScene",
                "derivative_graph": "DerivativeGraphScene",
                "curve_analysis": "CurveAnalysisScene",
-               "limit_approach": "LimitApproachScene"}
+               "limit_approach": "LimitApproachScene",
+               "newton": "NewtonScene"}
 #: Ungefähre Zahl der Teilanimationen, für den Fortschrittsbalken.
 _EXPECTED = {"secant_to_tangent": 14, "derivative_graph": 12, "curve_analysis": 18,
-             "limit_approach": 12}
+             "limit_approach": 12, "newton": 30}
 
 
 @dataclass
@@ -115,6 +117,7 @@ class AnimationJob:
               'x^2 if x<1 else x-1')
     x0      — Stelle der Tangente bzw. des Grenzwerts (secant_to_tangent, limit_approach)
     hs      — die Abstände h, nacheinander (secant_to_tangent, limit_approach)
+    n       — Zahl der Newton-Schritte (newton)
     xlim/ylim — Ausschnitt; None heisst automatisch
     fmt     — 'mp4' oder 'gif'
     """
@@ -128,6 +131,7 @@ class AnimationJob:
     theme: Theme = field(default_factory=Theme)
     quality: str = "low"
     fmt: str = "mp4"
+    n: int = 4
     gif_width: int = 760
     gif_fps: int = 15
 
@@ -157,7 +161,7 @@ def _f_text(f) -> str:
 
 
 def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
-              xlim=None, ylim=None, hs=None, dark: bool = False, title: str = "",
+              xlim=None, ylim=None, hs=None, n: int = 4, dark: bool = False, title: str = "",
               theme: Theme | None = None, style: str = "swiss") -> AnimationJob:
     """
     Baut einen Auftrag; rechnen und zeichnen tut erst render().
@@ -170,6 +174,7 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
     style   'swiss' (Standard) oder '3b1b' (Farben wie bei 3Blue1Brown)
     x0      Stelle der Tangente bzw. des Grenzwerts — für secant_to_tangent und limit_approach nötig
     hs      Abstände h der Sekante bzw. zu x0, in der Reihenfolge der Animation
+    n       Zahl der Newton-Schritte (nur 'newton'; x0 ist dort der Startwert)
     """
     quality = QUALITY_ALIASES.get(quality, quality)
     if scene not in SCENE_NAMES:
@@ -185,7 +190,9 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
     text = _f_text(f)
     xl = _xlim(xlim, None)
     x0v = None
-    if scene in ("secant_to_tangent", "limit_approach"):
+    if int(n) < 1:
+        raise ValueError("n braucht mindestens 1 Schritt")
+    if scene in ("secant_to_tangent", "limit_approach", "newton"):
         if x0 is None:
             raise ValueError(f"Für {scene} braucht es x0, die Stelle.")
         x0v = _xval(x0, "x0")[0]
@@ -211,7 +218,7 @@ def build_job(scene: str, f, *, quality: str = "low", fmt: str = "mp4", x0=None,
         xlim=list(xl) if xl else None, ylim=list(yl) if yl else None,
         title=title, theme=theme or (Theme.b3b1() if style == "3b1b"
                         else Theme.dark() if dark else Theme()),
-        quality=quality, fmt=fmt)
+        quality=quality, fmt=fmt, n=int(n))
 
 
 # --------------------------------------------------------------------------
@@ -911,10 +918,74 @@ def _build_scenes():
             self.say(text, 24, col, wait=0.8)
             self.wait(1.5)
 
+    # ======================================================================
+    class NewtonScene(AnaScene):
+        """Newton-Verfahren: Tangente, Nullstelle der Tangente, senkrecht zurück zur Kurve."""
+
+        def construct(self):
+            th, job, fn = self.th, self.job, self.fn
+            from ..rechnen.numerik import newton
+            res = newton(job.f, float(job.x0), max_iter=int(job.n))
+            rows = res.rows
+            xs = [r[1] for r in rows] + [rows[-1][4]]
+            ys = [r[2] for r in rows] + [0.0]
+            if job.xlim:
+                lo, hi = job.xlim
+            else:
+                a, b = min(xs), max(xs)
+                pad = max(b - a, 1e-9) * 0.25 + 0.5
+                lo, hi = a - pad, b + pad
+            scan = _scan(fn, lo, hi)
+            ylim = tuple(job.ylim) if job.ylim else _auto_ylim(scan, include=ys + [0.0])
+            fr = Frame((lo, hi), ylim, 8.2, 5.0, (-2.45, -0.25), trig=fn.trig, font=self.font)
+            title = self.headline(job.title or "Das Newton-Verfahren")
+            self.play(Write(title), FadeIn(fr.axes(th)), run_time=1.2)
+            graph, _ = self.graph(fr, fn, th.accent, scan)
+            self.play(Create(graph), run_time=1.6)
+
+            panel = RIGHT * 4.85
+            self.play(FadeIn(self.T("x_{k+1} = x_k − f/f′", 22, th.muted)
+                             .move_to(panel + UP * 2.6)), run_time=0.4)
+            table = VGroup()
+            left = np.array([2.75, 2.0, 0.0])
+
+            def add_row(text):
+                r = self.T(text, 21)
+                table.add(r)
+                table.arrange(DOWN, aligned_edge=LEFT, buff=0.2)
+                table.align_to(left, LEFT).align_to(left, UP)
+                return r
+
+            start = self.dot(fr.p(xs[0], 0), th.secant)
+            self.play(FadeIn(start), FadeIn(add_row(f"x₀ = {_num(xs[0], 6)}")), run_time=0.6)
+            self.say("Startwert x₀ auf der x-Achse.", wait=0.4)
+            for k, xk, fx, dfx, nxt in rows:
+                foot, pt = fr.p(xk, 0), fr.p(xk, fx)
+                up = DashedLine(foot, pt, dash_length=0.1, color=th.muted, stroke_width=2.5)
+                self.say(f"Von x_{k} senkrecht hoch zur Kurve: f(x_{k}) = {_num(fx, 4)}.")
+                self.play(Create(up), FadeIn(self.dot(pt, th.accent)), run_time=0.8)
+                tan = fr.line(xk, fx, dfx, th.tangent, 4)
+                self.say(f"Tangente an f in x_{k}, Steigung {_num(dfx, 4)}.")
+                self.play(Create(tan), run_time=1.0)
+                hit = self.dot(fr.p(nxt, 0), th.good)
+                self.say(f"Ihre Nullstelle ist x_{k + 1} = {_num(nxt, 6)}.")
+                self.play(FadeIn(hit, scale=2), FadeIn(add_row(f"x_{k + 1} = {_num(nxt, 6)}")),
+                          run_time=0.8)
+                self.wait(0.4)
+                self.play(FadeOut(tan), run_time=0.3)
+            if res.converged:
+                text, col = f"Die Werte stabilisieren sich: Nullstelle x ≈ {_num(res.root, 8)}.", th.good
+            else:
+                text, col = (f"Nach {len(rows)} Schritten: x ≈ {_num(res.root, 8)} "
+                             "(noch nicht stabil)."), th.muted
+            self.say(text, 24, col, wait=0.8)
+            self.wait(1.5)
+
     return {"secant_to_tangent": SecantToTangentScene,
             "derivative_graph": DerivativeGraphScene,
             "curve_analysis": CurveAnalysisScene,
-            "limit_approach": LimitApproachScene}
+            "limit_approach": LimitApproachScene,
+            "newton": NewtonScene}
 
 
 # --------------------------------------------------------------------------

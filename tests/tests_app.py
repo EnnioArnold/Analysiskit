@@ -213,6 +213,12 @@ check(isinstance(ok, bool))
 job = A.anim_job_for("steigung", {"f": "x^2", "method": "tan", "x0": "1"}, object(),
                      "secant_to_tangent", "medium") if A.ak_anim else None
 check(job is None or hasattr(job, "scene") or isinstance(job, str))
+if A.ak_anim:
+    from types import SimpleNamespace as NS
+    jn = A.anim_job_for("numerik", {"f": "x^2-2", "action": "newton", "x0": "3"},
+                        NS(rows=[0, 1, 2, 3]), "newton", "low")
+    check(getattr(jn, "scene", "") == "newton" and jn.n == 4 and jn.x0 == 3.0, jn)
+    check(isinstance(A.anim_job_for("hoeher", {"f": "x^2"}, object(), "newton", "low"), str))
 
 # Zeichnung: Mausrad zoomt, Doppelklick setzt zurück, Hover zeigt Koordinaten
 import matplotlib.pyplot as plt

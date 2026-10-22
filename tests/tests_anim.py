@@ -23,6 +23,8 @@ assert raises(ValueError, build_job, "nix", "x^2", x0=1)
 for s in ("limit_approach", "secant_to_tangent"):
     assert raises(ValueError, build_job, s, "x^2"), s
 
+assert build_job("newton", "x^2-2", x0=1, n=3).n == 3 and raises(ValueError, build_job, "newton", "x^2-2", x0=1, n=0)
+
 # (b) Swiss-Theme
 t, d = Theme(), Theme.dark()
 assert (t.background, d.background) == ("#ffffff", "#000000")
@@ -49,6 +51,8 @@ if ok:
     p = anim.render(build_job("limit_approach", "(x^2-1)/(x-1)", x0=1, quality="low"))
     assert os.path.exists(p) and str(p).endswith(".mp4") and os.path.getsize(p) > 0, p
     print("Rendering ok:", anim.engine(), p)
+    p = anim.render(build_job("newton", "x^2-2", x0=3, n=3, quality="low"))
+    assert os.path.exists(p) and os.path.getsize(p) > 0, p
 else:
     print("Rendering übersprungen:", why)
 print("alle Tests bestanden")

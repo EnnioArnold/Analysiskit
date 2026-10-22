@@ -2907,6 +2907,7 @@ ANIM_SCENES = {
     "limits": {"x nähert sich x₀": "limit_approach"},
     "derivative": {"f und f′": "derivative_graph"},
     "curve": {"Kurvendiskussion": "curve_analysis"},
+    "numerik": {"Newton-Verfahren": "newton"},
 }
 
 
@@ -3777,7 +3778,9 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     if ak_anim is None:
         return ("Die Animation (anim.py) ist in diesem Ordner nicht vorhanden. "
                 "Sie ist freiwillig; alles andere funktioniert auch ohne.")
-    if page in ("numerik", "hoeher"):
+    if page == "numerik" and (p.get("action", "newton") != "newton" or scene != "newton"):
+        return "Animiert wird nur das Newton-Verfahren."
+    if page == "hoeher":
         return ("Zu dieser Seite gibt es noch keine Animation — Rechenweg und Zeichnung "
                 "zeigen das Ergebnis.")
     if not scene:
@@ -3792,7 +3795,9 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     kw = {}
     if page == "limits" and p.get("action") not in ("limit", "table", "cont"):
         return "Für diese Aufgabe gibt es keine Animation — wähle einen Grenzwert."
-    if scene in ("secant_to_tangent", "limit_approach"):
+    if scene == "newton":
+        kw["n"] = min(max(len(getattr(result, "rows", ())), 1), 6)
+    if scene in ("secant_to_tangent", "limit_approach", "newton"):
         try:
             x0 = read_number(p.get("x0") or p.get("x1") or "", "die Stelle x₀")
             kw["x0"] = float(x0)
