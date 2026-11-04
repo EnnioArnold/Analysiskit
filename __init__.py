@@ -2,9 +2,10 @@
 """
 anakit — Grundlagen der Analysis mit nachvollziehbarem Rechenweg.
 
-Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 6: Sekanten und
+Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 8: Sekanten und
 Tangenten, Grenzwert und Stetigkeit, Ableitungsregeln, Monotonie und
-Extrema, Numerik, höhere Ableitungen und Taylor). Alles rechnet exakt (SymPy) und zeigt jeden Schritt so, wie er in
+Extrema, Numerik, höhere Ableitungen und Taylor, Optimierung, bestimmtes
+Integral). Alles rechnet exakt (SymPy) und zeigt jeden Schritt so, wie er in
 der Prüfung auf dem Papier stünde.
 
 Kurzübersicht
@@ -31,6 +32,13 @@ Kurzübersicht
     curve_basics("x^2/(x-1)")            # SW6: Pole, Asymptoten, Symmetrie
     higher_order_test("x^4", 0)          # SW6: erste nichtverschwindende Ableitung
     maclaurin("exp(x)", 4)               # SW6: MacLaurin-Polynom
+    curve_sketch("-1/6 x^4 + 2/3 x^3 + 2")   # SW6/7: Kurvendiskussion wie im Unterricht
+
+    optimize("r^2*pi*h", "R^2 = r^2 + (h/2)^2", eliminate="r^2", var="h",
+             domain=(0, "2R"))           # SW7: Zylinder in Kugel
+    integral_by_limit("x^2", 1, 2)       # SW8: Grenzwert der Obersumme = 7/3
+    rectangle_sums("x^2", 1, 2, 4)       # SW8: Unter- und Obersumme
+    faulhaber(2)                         # SW8: Σ k² = n³/3 + n²/2 + n/6
 
 Jedes Ergebnis zeigt sich im Notebook von selbst. `.as_decimal()` schaltet
 auf Dezimalzahlen um, `.latex()` liefert den Rechenweg zum Einfügen in eine
@@ -61,11 +69,15 @@ from .rechnen.analysis import (CriticalResult, CurvatureResult, DiscussionResult
 from .rechnen.numerik import (BisectionResult, DiffErrorTableResult, NewtonResult,
                        NumDiffResult, bisection, diff_error_table, newton,
                        numeric_diff, optimal_step)
-from .rechnen.kurve import (CurveBasicsResult, HigherOrderResult, curve_basics,
-                    higher_order_test)
+from .rechnen.kurve import (CurveBasicsResult, CurveSketchResult, HigherOrderResult,
+                    curve_basics, curve_sketch, higher_order_test)
 from .rechnen.reihen import TaylorResult, maclaurin, taylor
+from .rechnen.optimierung import OptimizeResult, optimize
+from .rechnen.integration import (DefiniteIntegralResult, FaulhaberResult,
+                    IntegralLimitResult, RectangleSumsResult, definite_integral,
+                    faulhaber, integral_by_limit, rectangle_sums)
 from .grafik.plots import (has_plotly, plot_bisection, plot_curve, plot_derivative,
-                    plot_function, plot_limit, plot_newton, plot_secant,
+                    plot_function, plot_limit, plot_newton, plot_riemann, plot_secant,
                     plot_secants_to_tangent, plot_tangent, plot_taylor,
                     plotly_function)
 
@@ -76,7 +88,8 @@ for _alias, _real in (("core", "rechnen.core"), ("render", "rechnen.render"),
                       ("steigung", "rechnen.steigung"), ("limits", "rechnen.limits"),
                       ("derivative", "rechnen.derivative"), ("analysis", "rechnen.analysis"),
                       ("numerik", "rechnen.numerik"), ("kurve", "rechnen.kurve"),
-                      ("reihen", "rechnen.reihen"),
+                      ("reihen", "rechnen.reihen"), ("optimierung", "rechnen.optimierung"),
+                      ("integration", "rechnen.integration"),
                       ("plots", "grafik.plots"), ("anim", "grafik.anim"),
                       ("exercises", "aufgaben.exercises"), ("uebung", "aufgaben.uebung")):
     _m = _il.import_module(f"{__name__}.{_real}")
@@ -107,11 +120,15 @@ __all__ = [
     # SW5 Numerische Mathematik I
     "bisection", "newton", "numeric_diff", "optimal_step", "diff_error_table",
     # SW6 Höhere Ableitungen, Kurvendiskussion, Taylor
-    "curve_basics", "higher_order_test", "taylor", "maclaurin",
+    "curve_basics", "curve_sketch", "higher_order_test", "taylor", "maclaurin",
+    # SW7 Optimierung
+    "optimize",
+    # SW8 Bestimmtes Integral
+    "rectangle_sums", "integral_by_limit", "faulhaber", "definite_integral",
     # Zeichnen
     "plot_function", "plot_secant", "plot_secants_to_tangent", "plot_tangent",
     "plot_derivative", "plot_curve", "plot_limit", "plot_bisection", "plot_newton",
-    "plot_taylor", "plotly_function", "has_plotly",
+    "plot_taylor", "plot_riemann", "plotly_function", "has_plotly",
 ]
 
 
@@ -135,12 +152,16 @@ def info() -> str:
         "SW5 Numerische Mathematik I:",
         "  bisection, newton, numeric_diff, optimal_step, diff_error_table",
         "SW6 Höhere Ableitungen und Taylor:",
-        "  curve_basics, higher_order_test, taylor, maclaurin",
+        "  curve_basics, curve_sketch, higher_order_test, taylor, maclaurin",
+        "SW7 Optimierung:",
+        "  optimize (Zielfunktion, Nebenbedingung, Z' = 0, Test mit Z'')",
+        "SW8 Bestimmtes Integral:",
+        "  rectangle_sums, integral_by_limit, faulhaber, definite_integral",
         "",
         "Zeichnen:",
         "  plot_function, plot_secant, plot_secants_to_tangent, plot_tangent,",
         "  plot_derivative, plot_curve, plot_limit,",
-        "  plot_bisection, plot_newton, plot_taylor",
+        "  plot_bisection, plot_newton, plot_taylor, plot_riemann",
         f"  Plotly für Interaktives: {'vorhanden' if has_plotly() else 'fehlt'}",
         "",
         "Jedes Ergebnis kennt .as_decimal(), .as_exact(), .latex(), .show(), .figure().",
