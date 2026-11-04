@@ -646,9 +646,17 @@ class _Analysis:
         else:
             detail = (f"Bei $x_0={t0}$ gilt $f'(x_0)=0$ und $f''(x_0)=0$; die 2. Ableitung entscheidet "
                       f"nicht. Darum: Vorzeichen von $f'$ links und rechts von $x_0$.")
+        f3 = self.d3.subs(x, p.x0) if _inexact(p.x0) else _simp(self.d3.subs(x, p.x0))
+        items.append(("f'''(x₀)", _item(f3)))
         if ra and rb:
             items.append(("f' links von x₀", self._f1_item(ra)))
             items.append(("f' rechts von x₀", self._f1_item(rb)))
+        if _sign_at(self.d3, p.x0) != 0:
+            unterricht = (" Im Unterricht (SW7, Notizen): f'(x₀)=0 ∧ f''(x₀)=0 ∧ f'''(x₀)≠0 ⇒ Sattelpunkt "
+                          "(dasselbe Ergebnis wie der Vorzeichenwechsel-Test).")
+        else:
+            unterricht = (" f'''(x₀)=0 ebenfalls: höhere Ableitungen prüfen (Sonderfälle, SW6; "
+                          "higher_order_test).")
         if p.kind == MIN:
             concl = "f' wechselt von − nach + ⇒ " + MIN
         elif p.kind == MAX:
@@ -659,7 +667,7 @@ class _Analysis:
             concl = "keine Entscheidung möglich"
         items.append(("Ergebnis", f"{p.kind} bei ({s0} / {_valstr(p.y0)})"))
         return Step(f"Einordnung bei x₀ = {s0} (Zusatzprüfung über f')", detail, items,
-                    note=f"Zusatz (nicht Teil des Kriteriums auf Folie 13): {concl}.",
+                    note=f"Zusatz (nicht Teil des Kriteriums auf Folie 13): {concl}.{unterricht}",
                     rule="Vorzeichenwechsel von f'")
 
     # -- Krümmung -------------------------------------------------------
@@ -749,9 +757,11 @@ class _Analysis:
                 items.append(("Wendepunkt", f"({s0 if not _inexact(w) else _valstr(w)} / {_valstr(d['y0'])})"))
                 note = ""
                 if d["horizontal"]:
-                    note = "Hier ist zugleich f'(x₀)=0: horizontale Tangente, also ein Sattelpunkt."
+                    note = ("Hier ist zugleich f'(x₀)=0: horizontale Tangente, also ein Sattelpunkt "
+                            "(SW7 Notizen: f'=0 ∧ f''=0 ∧ f'''≠0 ⇒ Sattelpunkt).")
                 else:
-                    note = f"Steigung der Wendetangente: f'(x₀) = {_valstr(d['slope'])}."
+                    note = (f"Steigung der Wendetangente: f'(x₀) = {_valstr(d['slope'])} ≠ 0, also ein Wendepunkt "
+                            "(SW7 Notizen: f'≠0 ∧ f''=0 ∧ f'''≠0 ⇒ Wendepunkt).")
             else:
                 note = ("Kein Vorzeichenwechsel von f'' ⇒ keine Wendestelle "
                         "(Beispiel x⁴ bei 0).")
@@ -995,7 +1005,7 @@ class DiscussionResult(_Figure, Result):
         S.extend(self.curvature.steps)
         S.append(Step("Lokale Extrema",
                       "f'(x₀)=0 ∧ f''(x₀)>0 ⇒ relatives Minimum; f'(x₀)=0 ∧ f''(x₀)<0 ⇒ relatives Maximum; "
-                      "f'(x₀)=0 ∧ f''(x₀)=0 ⇒ keine Aussage möglich."))
+                      "f'(x₀)=0 ∧ f''(x₀)=0 ⇒ keine Aussage möglich (Unterricht: f'''(x₀)≠0 ⇒ Sattelpunkt)."))
         S.extend([st for st in self.extrema.steps if st.title.startswith("Einordnung")
                   or st.title.startswith("Randpunkte")] or
                  [Step("Lokale Extrema", "Keine kritische Stelle ⇒ keine relativen Extrema.")])

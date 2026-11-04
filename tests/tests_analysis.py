@@ -190,6 +190,15 @@ cv = curvature("x^2")
 check(len(cv.left) == 1 and not cv.right and not cv.inflection_x, "x^2 Linkskrümmung")
 check(critical_points("x^3").points[0].kind == SAD, "x^3 Sattelpunkt")
 
+# Notizen SW7: Beispiel der Folie 5 (f = -1/6 x^4 + 2/3 x^3 + 2): f''(0) = 0, f'''(0) = 4 => Sattelpunkt
+sw7 = curve_discussion("-1/6*x^4 + 2/3*x^3 + 2")
+check(sw7.saddles == [(0, 2)] and sw7.maxima == [(3, sp.Rational(13, 2))] and not sw7.minima,
+      "SW7-Beispiel: Sattelpunkt (0/2), Maximum (3/13/2)")
+check(sw7.inflection_points == [(0, 2), (2, sp.Rational(14, 3))], "SW7-Beispiel: f''=0 bei 0 und 2")
+st = next(s for s in sw7.steps if s.title.startswith("Einordnung bei x₀ = 0"))
+check(any(lbl == "f'''(x₀)" and v == 4 for lbl, v in st.items), "Zusatzprüfung zeigt f'''(0) = 4")
+check("SW7" in st.note and "Sattelpunkt" in st.note, "Notiz nennt das Kriterium aus dem Unterricht")
+
 # Zeichnung (nur wenn plots.py schon vorhanden)
 try:
     from anakit import plots  # noqa

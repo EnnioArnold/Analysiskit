@@ -24,11 +24,13 @@ from __future__ import annotations
 
 import sympy as sp
 
-from .analysis import _find_roots
+from .analysis import (_Analysis, _find_roots, _inexact, _item, _sign_at, _value_at,
+                       _valstr)
 from .core import fmt, parse, x
 from .render import Result, Step
 
-__all__ = ["curve_basics", "higher_order_test", "CurveBasicsResult", "HigherOrderResult"]
+__all__ = ["curve_basics", "higher_order_test", "curve_sketch", "CurveBasicsResult",
+           "HigherOrderResult", "CurveSketchResult"]
 
 _REAL = sp.S.Reals
 
@@ -300,4 +302,190 @@ def higher_order_test(f, x0, kmax: int = 12) -> HigherOrderResult:
                           rule="Höhere Ableitungen"))
     res.highlights = [("k", k), (_L(f"f^{{({k})}}(x_0)"), vk), ("Art", res.kind),
                       ("Wendepunkt", "ja" if res.inflection else "nein")]
+    return res
+
+
+# ==========================================================================
+# Kurvendiskussion im Ablauf des Unterrichts (SW6/SW7)
+# ==========================================================================
+
+class CurveSketchResult(Result):
+    """Kurvendiskussion mit Skizze: Reihenfolge und Kriterien wie in SW6 und den Notizen von SW7."""
+
+    title = "Kurvendiskussion"
+
+    def __init__(self, f, a, basics):
+        super().__init__()
+        self.f, self._a, self.basics = f, a, basics
+        self.zeros = basics.zeros
+        self.poles = basics.poles
+        self.asymptotes = basics.asymptotes
+        self.critical_x: list = []
+        #: Listen von (x0, f(x0))
+        self.maxima: list = []
+        self.minima: list = []
+        self.saddles: list = []
+        self.inflections: list = []
+        self.undetermined: list = []
+
+    def figure(self, xlim=None, dark: bool = False, **kw):
+        from ..grafik.plots import plot_function
+        pts = [(float(sp.re(sp.N(z))), 0.0, "N") for z in self.zeros[:8] if z.is_real is not False]
+        for lst, name in ((self.maxima, "Max"), (self.minima, "Min"), (self.saddles, "SP"),
+                          (self.inflections, "WP")):
+            pts += [(float(sp.re(sp.N(px))), float(sp.re(sp.N(py))), name) for px, py in lst]
+        if xlim is None:
+            lo, hi = self._a.default_xlim()
+            xs = [p[0] for p in pts]
+            xlim = (min([lo] + [v - 0.5 for v in xs]), max([hi] + [v + 0.5 for v in xs]))
+        return plot_function(self.f, xlim, points=pts, dark=dark, title=f"f(x) = {fmt(self.f)}", **kw)
+
+
+def _sub(i: int) -> str:
+    return str(i).translate(str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉"))
+
+
+def _approx(e, digits: int = 4):
+    """Für Items: exakter Wert, bei CRootOf die Näherung als Zahl (Unterricht: x₁ ≈ −1.3)."""
+    return sp.Float(round(float(sp.re(sp.N(e, 30))), digits)) if _inexact(e) else e
+
+
+def _val(expr, pt):
+    """expr an der Stelle pt, vereinfacht (bei CRootOf unverändert eingesetzt)."""
+    v = expr.subs(x, pt)
+    return v if _inexact(pt) else sp.simplify(v)
+
+
+def _special(f, x0):
+    """higher_order_test, aber ohne Fehler: (Art, k, Wendepunkt?)."""
+    try:
+        ho = higher_order_test(f, x0)
+        return ho.kind, ho.k, bool(ho.inflection)
+    except Exception:
+        return "unbestimmt", None, False
+
+
+def curve_sketch(f) -> CurveSketchResult:
+    """
+    Kurvendiskussion in der Reihenfolge des Unterrichts (Folie SW6 «Themen und Lernziele»
+    und Notizen SW7 «Kurvendiskussion»): Definitions- und Wertebereich, Symmetrie,
+    Nullstellen, Pole und Asymptoten, Ableitungen bis zur 3. Ordnung, kritische Punkte
+    f'(x) = 0 mit Prüfung über f'' (und f''' bei f'' = 0), Wendepunkte f''(x) = 0, Skizze.
+
+        r = curve_sketch("-1/6 x^4 + 2/3 x^3 + 2")
+        r.maxima, r.saddles, r.inflections   # [(3, 13/2)], [(0, 2)], [(2, 14/3)]
+
+    Kriterien (Notizen SW7):
+
+        f' = 0 ∧ f'' < 0              ⇒ Maximum
+        f' = 0 ∧ f'' > 0              ⇒ Minimum
+        f' = 0 ∧ f'' = 0 ∧ f''' ≠ 0   ⇒ Sattelpunkt
+        f' ≠ 0 ∧ f'' = 0 ∧ f''' ≠ 0   ⇒ Wendepunkt
+
+    Ist auch f''' = 0, entscheidet die erste nichtverschwindende Ableitung (SW6, `higher_order_test`).
+    """
+    a = _Analysis(f)
+    basics = curve_basics(a.f)
+    res = CurveSketchResult(a.f, a, basics)
+    S = res.steps
+    res.title = f"Kurvendiskussion von f(x) = {fmt(a.f)}"
+    names = {step.title: step for step in basics.steps}
+
+    S.append(Step("Definitionsbereich und Wertebereich", "",
+                  names["Definitionsbereich"].items + names["Wertebereich"].items,
+                  note=names["Wertebereich"].note, rule="Definitionsbereich"))
+    S.append(names["Symmetrie"])
+    zs = basics.zeros
+    items = [(f"x{_sub(i)}", z) for i, z in enumerate(zs, 1)] or [("", "keine")]
+    items += [(f"x{_sub(i)} ≈", _approx(z)) for i, z in enumerate(zs, 1) if _inexact(z)]
+    S.append(Step("Nullstellen", "$f(x) = 0$ lösen; ist das nicht exakt möglich, numerisch nähern.",
+                  items, note=names["Nullstellen"].note, rule="Nullstellen"))
+    for t in ("Pole", "Verhalten im Unendlichen"):
+        if t in names:
+            S.append(names[t])
+    S.append(Step("Ableitungen bilden",
+                  "Meist genügen die Ableitungen bis zur 3. Ordnung (Folie SW6, Seite 3).",
+                  [("f'(x)", a.d1), ("f''(x)", a.d2), ("f'''(x)", a.d3)], rule="Ableitungsregeln"))
+
+    # Kritische Punkte f'(x) = 0
+    r1, _exact, info = a._r1
+    res.critical_x = list(r1)
+    S.append(Step("Kritische Punkte: f'(x) = 0",
+                  "Kritische Stellen sind die Lösungen von $f'(x_0)=0$.",
+                  [(f"x{_sub(i)}", _approx(r)) for i, r in enumerate(r1, 1)] or [("", "keine")],
+                  note=info, rule="kritische Stelle f'(x₀)=0"))
+    for i, x0 in enumerate(r1, 1):
+        y0 = _value_at(a.f, x0)
+        s2, s3 = _sign_at(a.d2, x0), _sign_at(a.d3, x0)
+        pos = (x0, y0)
+        at = f"({_valstr(x0)} / {_valstr(y0)})"
+        its = [("f''(x₀)", _item(_val(a.d2, x0)))]
+        if s2 < 0:
+            res.maxima.append(pos)
+            rule = "f'=0 ∧ f''<0 ⇒ Maximum"
+            detail = f"$f'(x_0)=0$ und $f''(x_0) < 0$ ⇒ Maximum bei {at}."
+        elif s2 > 0:
+            res.minima.append(pos)
+            rule = "f'=0 ∧ f''>0 ⇒ Minimum"
+            detail = f"$f'(x_0)=0$ und $f''(x_0) > 0$ ⇒ Minimum bei {at}."
+        else:
+            its.append(("f'''(x₀)", _item(_val(a.d3, x0))))
+            if s3 != 0:
+                res.saddles.append(pos)
+                rule = "f'=0 ∧ f''=0 ∧ f'''≠0 ⇒ Sattelpunkt"
+                detail = f"$f'(x_0)=0$, $f''(x_0)=0$ und $f'''(x_0)\\neq 0$ ⇒ Sattelpunkt bei {at}."
+            else:
+                kind, k, _infl = _special(a.f, x0)
+                its.append(("erste nichtverschwindende Ableitung", f"k = {k}" if k else "nicht bestimmt"))
+                {"relatives Minimum": res.minima, "relatives Maximum": res.maxima,
+                 "Sattelpunkt": res.saddles}.get(kind, res.undetermined).append(pos)
+                rule = "erste nichtverschwindende Ableitung (SW6)"
+                detail = ("$f'(x_0)=f''(x_0)=f'''(x_0)=0$: die erste nichtverschwindende Ableitung "
+                          f"entscheidet ⇒ {kind} bei {at}.")
+        S.append(Step(f"Prüfung bei x{_sub(i)} = {_valstr(x0)}", detail, its, rule=rule))
+    if not r1:
+        S.append(Step("Extrema", "Keine kritische Stelle ⇒ keine Extrema und keine Sattelpunkte."))
+
+    # Wendepunkte f''(x) = 0
+    r2, _exact2, info2 = a._r2
+    S.append(Step("Wendepunkte: f''(x) = 0",
+                  "Kandidaten sind die Lösungen von $f''(x_0)=0$; für einen Wendepunkt muss "
+                  "$f'''(x_0)\\neq 0$ und $f'(x_0)\\neq 0$ gelten.",
+                  [(f"w{_sub(i)}", _approx(r)) for i, r in enumerate(r2, 1)] or [("", "keine")],
+                  note=info2, rule="f''(x₀)=0"))
+    for i, w in enumerate(r2, 1):
+        y0 = _value_at(a.f, w)
+        s1, s3 = _sign_at(a.d1, w), _sign_at(a.d3, w)
+        at = f"({_valstr(w)} / {_valstr(y0)})"
+        its = [("f'(x₀)", _item(_val(a.d1, w))), ("f'''(x₀)", _item(_val(a.d3, w)))]
+        if s3 != 0:
+            infl, rule = True, ("f'≠0 ∧ f''=0 ∧ f'''≠0 ⇒ Wendepunkt" if s1 != 0
+                                else "f'=0 ∧ f''=0 ∧ f'''≠0 ⇒ Sattelpunkt")
+            detail = (f"$f''(x_0)=0$ und $f'''(x_0)\\neq 0$: Krümmungswechsel bei {at}." +
+                      (" Wegen $f'(x_0)\\neq 0$ ein Wendepunkt." if s1 != 0 else
+                       " Wegen $f'(x_0)=0$ ein Sattelpunkt (schon bei den kritischen Punkten)."))
+        else:
+            _kind, _k, infl = _special(a.f, w)
+            rule = "erste nichtverschwindende Ableitung (SW6)"
+            detail = ("$f'''(x_0)=0$: die erste nichtverschwindende Ableitung entscheidet ⇒ "
+                      + ("kein Wendepunkt." if not infl else
+                         "Wendepunkt." if s1 != 0 else "Sattelpunkt (schon oben)."))
+        if infl and s1 != 0:
+            res.inflections.append((w, y0))
+        S.append(Step(f"Prüfung bei w{_sub(i)} = {_valstr(w)}", detail, its, rule=rule))
+    if not r2:
+        S.append(Step("Wendepunkte", "Keine Lösung von f''(x) = 0 ⇒ keine Wendepunkte."))
+
+    def pts(lst):
+        return "; ".join(f"({_valstr(px)} / {_valstr(py)})" for px, py in lst) or "keine"
+    rows = [("Nullstellen", ", ".join(_valstr(z) for z in zs) or "keine"),
+            ("Maxima", pts(res.maxima)), ("Minima", pts(res.minima)),
+            ("Sattelpunkte", pts(res.saddles)), ("Wendepunkte", pts(res.inflections))]
+    if basics.asymptotes:
+        rows.append(("Asymptoten", "; ".join(basics.asymptotes)))
+    S.append(Step("Skizze", "Mit diesen Punkten und den Asymptoten lässt sich der Graph zeichnen "
+                  "(res.figure()).", rows, rule="Skizze"))
+    res.summary = (f"{len(zs)} Nullstelle(n), {len(res.maxima)} Maximum/Maxima, {len(res.minima)} "
+                   f"Minimum/Minima, {len(res.saddles)} Sattelpunkt(e), {len(res.inflections)} Wendepunkt(e)")
+    res.highlights = rows
     return res

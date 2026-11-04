@@ -15,7 +15,7 @@ matplotlib.use("agg")
 import sympy as sp
 
 from anakit.core import x
-from anakit.kurve import curve_basics, higher_order_test
+from anakit.kurve import curve_basics, curve_sketch, higher_order_test
 from anakit.reihen import maclaurin, taylor
 
 FAILS = []
@@ -89,6 +89,42 @@ check(curve_basics("1/x^2").poles[0][1] == "Pol ohne Vorzeichenwechsel", "1/x²:
 check(curve_basics("(x^2-1)/(x-1)").poles[0][1].startswith("Lücke"), "(x²−1)/(x−1): Lücke bei 1")
 check(curve_basics("x^2/(x-1)").figure() is not None, "curve_basics.figure")
 repr(c), c.latex()
+
+# SW7 Folie 6 und Notizen: e^(2x) um 0 und 1/x um 1
+print("Taylor (SW7)")
+t = maclaurin("exp(2*x)", 3)
+check(t.coefficients == [1, 2, 2, R(4, 3)], f"MacLaurin e^(2x): 1, 2, 2, 4/3: {t.coefficients}")
+check(gleich(t.polynomial, 1 + 2 * x + 2 * x ** 2 + R(4, 3) * x ** 3), "T(x) = 1 + 2x + 2x² + 4/3 x³")
+t = taylor("1/x", 1, 3)
+check(t.coefficients == [1, -1, 1, -1], f"Taylor 1/x um 1: Koeffizienten (−1)^k: {t.coefficients}")
+check(gleich(t.polynomial, 1 - (x - 1) + (x - 1) ** 2 - (x - 1) ** 3), "T(x) = 1 − (x−1) + (x−1)² − (x−1)³")
+
+# Kurvendiskussion im Ablauf des Unterrichts (Folie SW7, Seite 5 und Notizen)
+print("Kurvendiskussion (SW7)")
+k = curve_sketch("-1/6*x^4 + 2/3*x^3 + 2")
+check(k.maxima == [(3, R(13, 2))], f"Maximum bei (3 / 13/2): {k.maxima}")
+check(k.saddles == [(0, 2)], f"Sattelpunkt x₃ = 0 (f''(0) = 0, f'''(0) = 4 ≠ 0): {k.saddles}")
+check(k.inflections == [(2, R(14, 3))], f"Wendepunkt x₅ = 2: {k.inflections}")
+check(k.minima == [] and k.critical_x == [0, 3], "kritische Stellen 0 und 3")
+check([round(float(z), 1) for z in k.zeros] == [-1.3, 4.2], "Nullstellen −1.3 und 4.2 (Notizen)")
+tt = [st.title for st in k.steps]
+order = ["Definitionsbereich", "Symmetrie", "Nullstellen", "Ableitungen", "Kritische Punkte", "Prüfung bei x",
+         "Wendepunkte", "Skizze"]
+idx = [next(i for i, t in enumerate(tt) if t.startswith(o)) for o in order]
+check(idx == sorted(idx), f"Reihenfolge der Schritte wie im Unterricht: {tt}")
+check(any("f'''" in str(it[0]) for st in k.steps for it in st.items), "f''' kommt im Rechenweg vor")
+check(k.figure() is not None, "curve_sketch.figure")
+repr(k), k.latex(), k._repr_html_()
+# Sattelpunkt braucht f' = 0, Wendepunkt f' ≠ 0
+c3 = curve_sketch("x^3 - 3x")
+check(c3.maxima == [(-1, 2)] and c3.minima == [(1, -2)] and c3.inflections == [(0, 0)] and not c3.saddles,
+      "x³−3x: Max, Min, Wendepunkt (0/0) mit f'(0) = −3 ≠ 0")
+c4 = curve_sketch("x^4")
+check(c4.minima == [(0, 0)] and not c4.saddles and not c4.inflections, "x⁴: Sonderfall k = 4, Minimum, kein Wendepunkt")
+c5 = curve_sketch("x^5")
+check(c5.saddles == [(0, 0)] and not c5.inflections and not c5.minima, "x⁵: f'''(0) = 0, k = 5 ⇒ Sattelpunkt")
+c6 = curve_sketch("x^2/(x-1)")
+check(c6.asymptotes and len(c6.minima) == 1 and len(c6.maxima) == 1, "x²/(x−1): Pol, Max und Min")
 
 print()
 if FAILS:
