@@ -45,7 +45,7 @@ for key, ex in EXERCISES.items():
     check(ex.title and ex.task, f"{key}: Titel oder Aufgabentext fehlt")
     repr(ex)
     check(isinstance(ex._repr_html_(), str), f"{key}: _repr_html_")
-for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6"):
+for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6", "SW7", "SW8"):
     l = liste(w)
     check(len(l) >= 5, f"{w}: zu wenige Einträge")
     check(all(k.startswith(w + ".") for k in l), f"{w}: fremde Schlüssel")
@@ -78,7 +78,8 @@ for k in ("SW1.1", "SW1.3", "SW1.4", "SW1.5a", "SW1.5b", "SW1.6a", "SW1.6b", "SW
           "SW3.1", "SW3.2", "SW3.3a", "SW3.3b", "SW3.4", "SW3.5", "SW3.6a", "SW3.6b",
           "SW3.7", "SW4.1", "SW4.2", "SW4.3", "SW4.4", "SW4.5", "SW4.6",
           "SW5.1", "SW5.2", "SW5.3", "SW5.4", "SW5.5", "SW6.1", "SW6.2", "SW6.3", "SW6.4",
-          "SW6.5", "SW6.6"):
+          "SW6.5", "SW6.6", "SW7.1", "SW7.2", "SW7.3", "SW7.4", "SW7.5", "SW7.6",
+          "SW8.1", "SW8.2", "SW8.3", "SW8.4", "SW8.5"):
     check(k in EXERCISES, f"Pflichtaufgabe {k} fehlt")
 
 # Leseliste
@@ -110,7 +111,7 @@ for key, res in alle.items():
     check(getattr(res, "steps", None), f"{key}: Ergebnis ohne Schritte")
     repr(res)
     check(isinstance(res._repr_html_(), str), f"{key}: Ergebnis _repr_html_")
-for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6"):
+for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6", "SW7", "SW8"):
     check(set(loese_alle(w)) == {k for k in rechen if k.startswith(w + ".")}, f"loese_alle({w})")
 
 # --------------------------------------------------------------------------
@@ -199,6 +200,27 @@ check(gleich(val("SW6.2").polynomial, x - x**3 / 6 + x**5 / 120), "SW6.2: MacLau
 check(gleich(val("SW6.3").polynomial, (x - 1) - (x - 1)**2 / 2 + (x - 1)**3 / 3), "SW6.3: Taylor ln")
 check(val("SW6.4").kind == "relatives Minimum" and val("SW6.5").kind == "Sattelpunkt", "SW6.4/6.5: Sonderfälle")
 check(val("SW6.6").lines == [x + 1], "SW6.6: schräge Asymptote y = x + 1")
+
+# SW7/SW8: Werte aus den Folien und Notizen (siehe tests_reihen, tests_optimierung, tests_integration)
+Rr = sp.Symbol("R", real=True, positive=True)
+Lr = sp.Symbol("L", real=True, positive=True)
+k71 = val("SW7.1")
+check(k71.maxima == [(3, sp.Rational(13, 2))] and k71.saddles == [(0, 2)] and k71.inflections == [(2, sp.Rational(14, 3))],
+      "SW7.1: Max (3/13/2), Sattelpunkt (0/2), Wendepunkt (2/14/3)")
+check([round(float(z), 1) for z in k71.zeros] == [-1.3, 4.2], "SW7.1: Nullstellen −1.3 und 4.2")
+check(val("SW7.2").coefficients == [1, 2, 2, sp.Rational(4, 3)], "SW7.2: e^(2x)")
+check(val("SW7.3").coefficients == [1, -1, 1, -1], "SW7.3: 1/x um 1")
+check(gleich(val("SW7.4").best, 2 * Rr / sp.sqrt(3)), "SW7.4: h = 2R/√3")
+check(gleich(val("SW7.5").best, 2 - 2 * sp.sqrt(6) / 3), "SW7.5: x₁ = 2 − (2/3)√6")
+check(gleich(val("SW7.6").best, Lr / 2) and gleich(val("SW7.6").others["L1"], Lr / 4), "SW7.6: L₂ = L/2, L₁ = L/4")
+n_ = sp.Symbol("n", positive=True, integer=True)
+check(val("SW8.1").rows[0][1:3] == (sp.Rational(63, 32), sp.Rational(87, 32)), "SW8.1: n = 4")
+check(val("SW8.2").limit == sp.Rational(7, 3), "SW8.2: Grenzwert 7/3")
+check(gleich(val("SW8.2").upper, sp.Rational(7, 3) + sp.Rational(3, 2) / n_ + sp.Rational(1, 6) / n_ ** 2), "SW8.2: Ō(n)")
+check(gleich(val("SW8.3").formula, n_ ** 4 / 4 + n_ ** 3 / 2 + n_ ** 2 / 4), "SW8.3: Σ k³")
+check(val("SW8.4").value == sp.Rational(7, 3), "SW8.4: 7/3")
+check(val("SW8.5").upper > val("SW8.5").lower, "SW8.5: Ober- > Untersumme")
+
 
 # --------------------------------------------------------------------------
 # 4. Prüfstand: Beispiellösungen (nur hier, nicht im Paket)

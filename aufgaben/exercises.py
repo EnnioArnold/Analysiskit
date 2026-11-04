@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Die Rechenaufgaben aus den Folien der Semesterwochen 1 bis 6.
+Die Rechenaufgaben aus den Folien der Semesterwochen 1 bis 8.
 
 Die Aufgaben stehen hier als Daten, nicht als fertige Antworten. Du holst
 dir eine Aufgabe, rechnest selbst und vergleichst — das ist der Zweck.
@@ -23,6 +23,11 @@ SW5.4 stammen aus den Notebooks der Vorlesung (newton.ipynb,
 Ableitungsfunktion.ipynb); alle anderen Aufgaben dieser beiden Wochen sind
 eigene Beispiele zum Stoff, im Titel mit „(eigenes Beispiel)“ gekennzeichnet.
 Ihre Ergebnisse sind in tests/ nachgerechnet.
+
+SW7 und SW8 stützen sich auf die Folien und die Notizen aus dem Unterricht
+(SW7: Kurvendiskussion, MacLaurin/Taylor, Zylinder in Kugel, Holzstück, Zaun an
+der Wand; SW8: Rechtecksummen, Grenzwert der Obersumme, Faulhaber, Hauptsatz als
+Ausblick). Was nicht auf den Folien steht, trägt „(eigenes Beispiel)“ im Titel.
 """
 
 from __future__ import annotations
@@ -467,6 +472,77 @@ _ex("SW6.6", "Funktionsüberblick zu x²/(x − 1) (eigenes Beispiel)",
     "Folie 3 (Lernziele der Kurvendiskussion). Ableitungen, Extrema und Wendepunkte "
     "dazu: SW4.6 bzw. curve_discussion.")
 
+# -- Semesterwoche 7: Optimierung ----------------------------------------------
+
+_ex("SW7.1", "Kurvendiskussion: Nullstellen, Extrema, Wende- und Sattelpunkte",
+    "Für f(x) = −x⁴/6 + 2x³/3 + 2 die Nullstellen, Extrema sowie Wende- und Sattelpunkte "
+    "bestimmen.",
+    {"f": "-1/6*x^4 + 2/3*x^3 + 2"}, "curve_sketch",
+    "Folie 5 und Notizen im Unterricht. Reihenfolge wie dort: Nullstellen (−1.3 und 4.2), "
+    "kritische Punkte f'(x) = 0 (x = 0 und x = 3), Prüfung mit f'' und f''': Sattelpunkt bei 0, "
+    "Maximum bei 3, Wendepunkt bei 2.")
+
+_ex("SW7.2", "MacLaurin-Polynom von e^(2x)",
+    "Die Funktion f(x) = e^(2x) an der Stelle x₀ = 0 in ein MacLaurin-Polynom entwickeln.",
+    {"f": "exp(2*x)", "n": 3}, "maclaurin",
+    "Folie 6 und Notizen: T(x) = 1 + 2x + 2x² + 4/3·x³ + …")
+
+_ex("SW7.3", "Taylor-Polynom von 1/x um x₀ = 1",
+    "Die Funktion f(x) = 1/x an der Stelle x₀ = 1 in ein Taylor-Polynom entwickeln.",
+    {"f": "1/x", "x0": "1", "n": 3}, "taylor",
+    "Folie 6 und Notizen: aₖ = (−1)ᵏ, also T(x) = Σ (−1)ᵏ (x − 1)ᵏ.")
+
+_ex("SW7.4", "Optimierung: Zylinder mit grösstem Volumen in einer Kugel",
+    "Einen Zylinder mit maximalem Volumen in eine Kugel mit Radius R einbeschreiben.",
+    {"target": "r^2*pi*h", "constraint": "R^2 = r^2 + (h/2)^2",
+     "kwargs": {"eliminate": "r^2", "var": "h", "domain": (0, "2R")}}, "optimize",
+    "Folie 8 und Notizen: V = r²πh; Nebenbedingung R² = r² + (h/2)²; V(h) = R²πh − h³π/4; "
+    "h = 2R/√3, V'' < 0 ⇒ Maximum. Der Bereich 0 < h < 2R verwirft das negative h.")
+
+_ex("SW7.5", "Optimierung: Holzstück mit maximaler rechteckiger Grundfläche",
+    "Ein Holzstück (a = 4, b = 5) hat eine abgebrochene Ecke, die Bruchkante ist "
+    "H(x) = 4 + 2x − x². Welches Rechteck A(x) = (4 − x)·H(x) hat maximalen Flächeninhalt?",
+    {"target": "(4-x)*(4+2*x-x^2)", "constraint": None, "kwargs": {"var": "x"}}, "optimize",
+    "Folien 9 und 10. Zielfunktion x³ − 6x² + 4x + 16, kritische Stellen 2 ∓ (2/3)√6. "
+    "Auf der Folie steht x₂ und B(x₁) als 3.3630, richtig ist 3.6330 (Zahlendreher). "
+    "Die Folie rechnet ohne Bereich; mit domain=(0, 1) (Bruchkante) bleibt nur x₁.")
+
+_ex("SW7.6", "Optimierung: Zaun an einer Wand",
+    "Mit einem Zaun der Länge L soll an einer geraden Wand ein rechteckiges Stück Land "
+    "eingezäunt werden, so dass der Flächeninhalt maximal wird. Seitenlängen und Fläche bestimmen.",
+    {"target": "L1*L2", "constraint": "L = 2*L1 + L2",
+     "kwargs": {"eliminate": "L1", "var": "L2", "domain": (0, "L")}}, "optimize",
+    "Notizen im Unterricht: L = 2L₁ + L₂, F = L₁L₂; L₂ = L/2, L₁ = L/4, F'' = −1 < 0 ⇒ Maximum.")
+
+# -- Semesterwoche 8: Bestimmtes Integral ---------------------------------------
+
+_ex("SW8.1", "Rechtecksummen für ∫ x² dx von 1 bis 2",
+    "Ober- und Untersumme für ∫₁² x² dx mit n = 4, 10, 100, 1000 Rechtecken berechnen.",
+    {"f": "x^2", "a": "1", "b": "2", "n": [4, 10, 100, 1000]}, "rectangle_sums",
+    "Folie 7 (Python-Notebook integration-rechtecke.ipynb). Die Werte von n sind frei gewählt "
+    "(TODO: das Notebook liegt nicht vor).")
+
+_ex("SW8.2", "Grenzwert der Obersumme für ∫ x² dx von 1 bis 2",
+    "Den Flächeninhalt ∫₁² x² dx als Grenzwert der Obersumme berechnen.",
+    {"f": "x^2", "a": "1", "b": "2"}, "integral_by_limit",
+    "Folie 8: Δx = 1/n, xₖ = (n + k)/n, Ō = 7/3 + 3/(2n) + 1/(6n²), Grenzwert 7/3.")
+
+_ex("SW8.3", "Faulhabersche Formeln",
+    "Die Summen 1ᵖ + 2ᵖ + … + nᵖ für p = 0, 1, 2, 3 als Polynome in n angeben.",
+    {"p": 3}, "faulhaber",
+    "Folie 10: n; n²/2 + n/2; n³/3 + n²/2 + n/6; n⁴/4 + n³/2 + n²/4.")
+
+_ex("SW8.4", "Hauptsatz (Ausblick): ∫ x² dx von 1 bis 2",
+    "Das Integral ∫₁² x² dx mit der Stammfunktion berechnen.",
+    {"f": "x^2", "a": "1", "b": "2"}, "definite_integral",
+    "Folie 11 (Ausblick): [x³/3] von 1 bis 2 = 8/3 − 1/3 = 7/3.")
+
+_ex("SW8.5", "Rechtecksummen für 1/x auf [1/2, 2] (eigenes Beispiel)",
+    "Ober- und Untersumme für ∫ 1/x dx von 1/2 bis 2 mit n = 5 Rechtecken berechnen.",
+    {"f": "1/x", "a": "1/2", "b": "2", "n": 5}, "rectangle_sums",
+    "Eigenes Beispiel zur Zeichnung auf Folie 5 (fallende Funktion: die Obersumme nimmt die "
+    "linken Randwerte). Funktion und Grenzen sind nach der Zeichnung gewählt, nicht auf der Folie angegeben.")
+
 
 # -- Do It Yourself: Verweise ohne Lösung --------------------------------------
 
@@ -565,6 +641,26 @@ _diy("SW6.DIY", [
     "Seite 420 (14. Aufl.), 432 (16. Aufl.); Lösungen Seiten 794 – 797 (16. Aufl.)",
     "Taylor- und MacLaurin-Polynome: Kapitel VI, Abschnitt 3, Aufgaben 1 c), 5 b), 5 c) und 6) — "
     "Seiten 635 – 636 (14. Aufl.), 647 – 648 (16. Aufl.); Lösungen Seiten 827 – 828 (16. Aufl.)",
+])
+
+_diy("SW7.DIY", [
+    "Optimierungsaufgaben: Papula Band 1, Kapitel IV, Abschnitt 3.5 — Seiten 394 – 396 (14. Aufl.), "
+    "406 – 408 (16. Aufl.)",
+    "MathemaTrick-Video zu Optimierungsaufgaben (Link auf der Folie)",
+    "StudyHelp-Seite zu Optimierungsaufgaben (Link auf der Folie)",
+], [
+    "Papula Band 1, Kapitel IV, zu Abschnitt 3: Aufgabe 20 — Seite 420 (14. Aufl.), 432 (16. Aufl.); "
+    "Lösungen Seite 779 (14. Aufl.), 793 (16. Aufl.)",
+])
+
+_diy("SW8.DIY", [
+    "Papula Band 1, Kapitel V, Abschnitt 1 — Seiten 422 – 426 (14. Aufl.), 434 – 438 (16. Aufl.)",
+    "Papula Band 1, Kapitel V, Abschnitt 2 — Seiten 426 – 436 (14. Aufl.), 438 – 448 (16. Aufl.)",
+], [
+    "Papula Band 1, Kapitel V, zu Abschnitt 1 bis 7: Aufgaben 1 a), b), g) und h) — Seite 559 (14. Aufl.), "
+    "571 (16. Aufl.); Lösungen Seite 787 (14. Aufl.), 801 (16. Aufl.)",
+    "Papula Band 1, Kapitel V, zu Abschnitt 1 bis 7: Aufgaben 3 a), b) und f) — Seite 560 (14. Aufl.), "
+    "572 (16. Aufl.); Lösungen Seite 787 – 788 (14. Aufl.), 810 – 802 (16. Aufl.)",
 ])
 
 
@@ -670,9 +766,11 @@ class TripleProductResult(Result):
 
 def _lookup():
     """Alle Verfahren, die als `method` vorkommen dürfen."""
-    from ..rechnen import analysis, derivative, kurve, limits, numerik, reihen, steigung
+    from ..rechnen import (analysis, derivative, integration, kurve, limits, numerik, optimierung,
+                           reihen, steigung)
     table = {}
-    for mod in (steigung, limits, derivative, analysis, numerik, kurve, reihen):
+    for mod in (steigung, limits, derivative, analysis, numerik, kurve, reihen, optimierung,
+                integration):
         for name in dir(mod):
             if not name.startswith("_") and callable(getattr(mod, name)):
                 table[name] = getattr(mod, name)
@@ -713,6 +811,12 @@ _ARGS: dict[str, list[str]] = {
     "higher_order_test": ["f", "x0"],
     "taylor": ["f", "x0", "n"],
     "maclaurin": ["f", "n"],
+    "curve_sketch": ["f"],
+    "optimize": ["target", "constraint"],
+    "rectangle_sums": ["f", "a", "b", "n"],
+    "integral_by_limit": ["f", "a", "b"],
+    "faulhaber": ["p"],
+    "definite_integral": ["f", "a", "b"],
     "triple_product": [],
 }
 
