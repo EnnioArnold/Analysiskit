@@ -409,12 +409,13 @@ def curve_sketch(f) -> CurveSketchResult:
 
     # Kritische Punkte f'(x) = 0
     r1, _exact, info = a._r1
+    n0 = len(zs)   # Notizen SW7: die Stellen werden durchnummeriert (Nullstellen x₁, x₂, kritische x₃, x₄, Wende x₅)
     res.critical_x = list(r1)
     S.append(Step("Kritische Punkte: f'(x) = 0",
                   "Kritische Stellen sind die Lösungen von $f'(x_0)=0$.",
-                  [(f"x{_sub(i)}", _approx(r)) for i, r in enumerate(r1, 1)] or [("", "keine")],
+                  [(f"x{_sub(i)}", _approx(r)) for i, r in enumerate(r1, n0 + 1)] or [("", "keine")],
                   note=info, rule="kritische Stelle f'(x₀)=0"))
-    for i, x0 in enumerate(r1, 1):
+    for i, x0 in enumerate(r1, n0 + 1):
         y0 = _value_at(a.f, x0)
         s2, s3 = _sign_at(a.d2, x0), _sign_at(a.d3, x0)
         pos = (x0, y0)
@@ -448,12 +449,20 @@ def curve_sketch(f) -> CurveSketchResult:
 
     # Wendepunkte f''(x) = 0
     r2, _exact2, info2 = a._r2
+    # Stelle, die schon kritisch ist (Sattelpunkt), behält ihre Nummer; neue zählen weiter
+    nums, nxt = {}, n0 + len(r1) + 1
+    for i, r in enumerate(r1, n0 + 1):
+        nums[r] = i
+    for r in r2:
+        if r not in nums:
+            nums[r], nxt = nxt, nxt + 1
     S.append(Step("Wendepunkte: f''(x) = 0",
                   "Kandidaten sind die Lösungen von $f''(x_0)=0$; für einen Wendepunkt muss "
                   "$f'''(x_0)\\neq 0$ und $f'(x_0)\\neq 0$ gelten.",
-                  [(f"w{_sub(i)}", _approx(r)) for i, r in enumerate(r2, 1)] or [("", "keine")],
+                  [(f"x{_sub(nums[r])}", _approx(r)) for r in r2] or [("", "keine")],
                   note=info2, rule="f''(x₀)=0"))
-    for i, w in enumerate(r2, 1):
+    for w in r2:
+        i = nums[w]
         y0 = _value_at(a.f, w)
         s1, s3 = _sign_at(a.d1, w), _sign_at(a.d3, w)
         at = f"({_valstr(w)} / {_valstr(y0)})"
@@ -472,7 +481,7 @@ def curve_sketch(f) -> CurveSketchResult:
                          "Wendepunkt." if s1 != 0 else "Sattelpunkt (schon oben)."))
         if infl and s1 != 0:
             res.inflections.append((w, y0))
-        S.append(Step(f"Prüfung bei w{_sub(i)} = {_valstr(w)}", detail, its, rule=rule))
+        S.append(Step(f"Prüfung bei x{_sub(i)} = {_valstr(w)}", detail, its, rule=rule))
     if not r2:
         S.append(Step("Wendepunkte", "Keine Lösung von f''(x) = 0 ⇒ keine Wendepunkte."))
 
