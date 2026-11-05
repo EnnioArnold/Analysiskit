@@ -6,7 +6,8 @@ Commits). Rechnen exakt mit SymPy; nur Numerik (SW5) rechnet mit float.
 ## Aufbau
 
 - `rechnen/` Rechenkern, je Semesterwoche ein Modul (`steigung` SW1, `limits` SW2,
-  `derivative` SW3, `analysis` SW4, `numerik` SW5, `kurve` + `reihen` SW6)
+  `derivative` SW3, `analysis` SW4, `numerik` SW5, `kurve` + `reihen` SW6, `optimierung` SW7, `integration` SW8;
+  `curve_sketch` in `kurve.py` ist die Kurvendiskussion wie im Unterricht)
 - `grafik/` `plots.py` (Matplotlib), `anim.py` (Manim/manimgx)
 - `aufgaben/` `exercises.py` (Aufgaben als Daten + `loese`), `uebung.py` (Prüfstände)
 - `app/anakit_qt.py` das Qt-Fenster, `tests/` ein Skript je Modul, `docs/` Diagramm
