@@ -488,4 +488,6 @@ def curve_sketch(f) -> CurveSketchResult:
     res.summary = (f"{len(zs)} Nullstelle(n), {len(res.maxima)} Maximum/Maxima, {len(res.minima)} "
                    f"Minimum/Minima, {len(res.saddles)} Sattelpunkt(e), {len(res.inflections)} Wendepunkt(e)")
     res.highlights = rows
+    res.inflection_points = res.inflections
+    res.inflection_x = [w for w, _ in res.inflections]
     return res

@@ -143,6 +143,25 @@ check(rep.verdict == "ok", [(c.name, c.status) for c in rep.checks])
 raises_input("hoeher", dict(A.DEFAULTS["hoeher"], action="mac", n="99"), "zwischen")
 raises_input("hoeher", dict(A.DEFAULTS["hoeher"], action="taylor", f="ln(x)", x0="0", n="2"), "nicht definiert")
 
+# ---------------------------------------------------------------- SW7/SW8: Seiten Optimierung, Integral
+check(len(A.PAGE_CLASSES) == 8 and A.PAGE_KEYS[-2:] == ("optimierung", "integral"), "acht Seiten")
+r = A.calc("optimierung", dict(A.DEFAULTS["optimierung"]))
+check(sp.simplify(r.best - 2 * sp.Symbol("R", real=True, positive=True) / sp.sqrt(3)) == 0, "Zylinder: h = 2R/√3")
+r = A.calc("optimierung", dict(A.EXAMPLES["optimierung"][1][1]))
+check(sp.simplify(r.best - (2 - 2 * sp.sqrt(6) / 3)) == 0, "Holzstück: x₁")
+raises_input("optimierung", dict(A.DEFAULTS["optimierung"], f=""), "Zielfunktion")
+raises_input("optimierung", dict(A.DEFAULTS["optimierung"], b=""), "Bereich")
+r = A.calc("integral", dict(A.DEFAULTS["integral"], action="limit"))
+check(r.limit == sp.Rational(7, 3), "Integral: 7/3")
+rep = A.run_wolfram_checks("X", "integral", dict(A.DEFAULTS["integral"], action="limit"), r, ask=lambda a, q: "7/3")
+check(rep.verdict == "ok", [(c.name, c.status) for c in rep.checks])
+raises_input("integral", dict(A.DEFAULTS["integral"], a="2", b="1"), "kleiner")
+raises_input("integral", dict(A.DEFAULTS["integral"], n="0"), "zwischen")
+raises_input("integral", dict(A.DEFAULTS["integral"], action="faulhaber", p="-1"), "Exponent")
+r = A.calc("curve", dict(A.DEFAULTS["curve"], f="-1/6*x^4+2/3*x^3+2", action="sketch"))
+check(r.saddles == [(0, 2)] and r.maxima == [(3, sp.Rational(13, 2))], "Kurvendiskussion wie im Unterricht")
+raises_input("curve", dict(A.DEFAULTS["curve"], action="sketch", a="0", b="1"), "ℝ")
+
 # ---------------------------------------------------------------- Rechnen ohne Fenster
 for key, examples in A.EXAMPLES.items():
     for name, params in examples:
