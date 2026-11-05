@@ -2,9 +2,9 @@
 """
 anakit — Analysis mit Rechenweg, als Desktop-App im Apple-Stil (Qt).
 
-Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 6). Die App rechnet
+Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 8). Die App rechnet
 mit demselben Paket `anakit` wie das Notebook; sie ist nur eine andere
-Oberfläche dafür. Sechs Seiten:
+Oberfläche dafür. Acht Seiten:
 
     Steigung & Tangente   Sekanten, Tangente, Ableitung aus der Definition
     Grenzwerte            Grenzwert, Stetigkeit, Wertetabelle
@@ -12,6 +12,8 @@ Oberfläche dafür. Sechs Seiten:
     Kurvendiskussion      Monotonie, kritische Punkte, Krümmung, Extrema
     Numerik               Bisektion, Newton-Verfahren, numerisch Differenzieren
     Höhere Ableitungen    Taylor, MacLaurin, Sonderfälle, Funktionsüberblick
+    Optimierung           Zielfunktion, Nebenbedingung, Extremum (SW7)
+    Integral              Rechtecksummen, Grenzwert der Obersumme, Faulhaber (SW8)
 
 Jede Seite zeigt ihr Ergebnis als Karte mit drei Ansichten: Rechenweg
 (gesetzte Formeln), Zeichnung und Animation. Die Prüfung mit Wolfram|Alpha
@@ -235,7 +237,7 @@ def friendly_error(exc: BaseException) -> str:
 # Jede Seite hat ein Wörterbuch `p` mit den Eingaben als Text; `calc(seite, p)`
 # gibt das anakit-Ergebnis zurück oder wirft einen InputError.
 
-PAGE_KEYS = ("steigung", "limits", "derivative", "curve", "numerik", "hoeher")
+PAGE_KEYS = ("steigung", "limits", "derivative", "curve", "numerik", "hoeher", "optimierung", "integral")
 
 STEIGUNG_METHODS = [("sek12", "Sekante", "Sekante durch die Stellen x₁ und x₂"),
                     ("sekh", "Sekante (h)", "Differenzenquotient an x₀ mit Abstand h"),
@@ -271,7 +273,9 @@ CURVE_ACTIONS = [("all", "Alles", "Ganze Kurvendiskussion mit Zusammenfassung"),
                  ("crit", "Kritisch", "Kritische Punkte: f′(x₀) = 0"),
                  ("curv", "Krümmung", "Krümmungsverhalten über f″"),
                  ("ext", "Extrema", "Lokale Extrema mit dem Kriterium der zweiten Ableitung"),
-                 ("infl", "Wendepunkte", "Wendepunkte: f″(x₀) = 0, f‴(x₀) ≠ 0")]
+                 ("infl", "Wendepunkte", "Wendepunkte: f″(x₀) = 0, f‴(x₀) ≠ 0"),
+                 ("sketch", "Unterricht", "Ablauf wie im Unterricht (SW6/SW7): Nullstellen, kritische Punkte "
+                  "mit f″ und f‴, Wendepunkte, Skizze")]
 
 NUMERIK_ACTIONS = [("bisect", "Bisektion", "Nullstelle durch Halbieren des Intervalls [a, b]"),
                    ("newton", "Newton", "Nullstelle mit dem Newton-Verfahren aus einem Startwert"),
@@ -284,6 +288,13 @@ HOEHER_ACTIONS = [("taylor", "Taylor", "Taylor-Polynom n-ten Grades um die Stell
                   ("mac", "MacLaurin", "MacLaurin-Polynom n-ten Grades (x₀ = 0)"),
                   ("higher", "Sonderfall", "Erste nichtverschwindende Ableitung an x₀ und der Schluss daraus"),
                   ("basics", "Überblick", "Definitionsbereich, Symmetrie, Nullstellen, Pole, Asymptoten")]
+
+OPT_ACTIONS = [("opt", "Optimieren", "Zielfunktion, Nebenbedingung, Z′ = 0, Test mit Z″")]
+
+INTEGRAL_ACTIONS = [("sums", "Rechtecksummen", "Unter- und Obersumme mit n Rechtecken"),
+                    ("limit", "Grenzwert", "Grenzwert der Obersumme für n → ∞ (Polynome)"),
+                    ("faulhaber", "Faulhaber", "Summe 1ᵖ + 2ᵖ + … + nᵖ als Polynom in n"),
+                    ("ftc", "Hauptsatz", "Ausblick: Stammfunktion, F(b) − F(a)")]
 
 #: Beispiele je Seite: (Name, Eingaben als Wörterbuch). Wer eine Seite
 #: öffnet, kann sie durchklicken — und der Test rechnet jede einzelne.
@@ -351,6 +362,23 @@ EXAMPLES: dict[str, list[tuple[str, dict]]] = {
         ("Überblick x²/(x−1)", dict(f="x^2/(x-1)", action="basics")),
         ("Überblick (2x²+1)/(x²−3)", dict(f="(2x^2+1)/(x^2-3)", action="basics")),
     ],
+    # SW7: Folien und Notizen im Unterricht
+    "optimierung": [
+        ("Zylinder in Kugel (Notizen)", dict(f="r^2*pi*h", constraint="R^2 = r^2 + (h/2)^2", eliminate="r^2",
+                                             var="h", a="0", b="2R", closed="0", goal="max", action="opt")),
+        ("Holzstück (Folie 9/10)", dict(f="(4-x)*(4+2x-x^2)", constraint="", eliminate="", var="x",
+                                        a="", b="", closed="0", goal="max", action="opt")),
+        ("Zaun an der Wand (Notizen)", dict(f="L1*L2", constraint="L = 2*L1 + L2", eliminate="L1", var="L2",
+                                            a="0", b="L", closed="0", goal="max", action="opt")),
+    ],
+    # SW8: Folien 7, 8, 10, 11
+    "integral": [
+        ("Rechtecksummen x² auf [1, 2], n = 4", dict(f="x^2", a="1", b="2", n="4", action="sums")),
+        ("Grenzwert der Obersumme x² auf [1, 2]", dict(f="x^2", a="1", b="2", n="4", action="limit")),
+        ("Faulhaber bis p = 3", dict(f="x^2", a="1", b="2", n="4", p="3", action="faulhaber")),
+        ("Hauptsatz x² auf [1, 2]", dict(f="x^2", a="1", b="2", n="4", action="ftc")),
+        ("Rechtecksummen 1/x auf [1/2, 2], n = 5 (eigenes Beispiel)", dict(f="1/x", a="1/2", b="2", n="5", action="sums")),
+    ],
 }
 
 DEFAULTS: dict[str, dict] = {
@@ -363,6 +391,9 @@ DEFAULTS: dict[str, dict] = {
     "numerik": dict(f="x^2-1.5", action="newton", a="1", b="4", tol="1e-6", x0="3", h="",
                     kind="zentral", numerisch="0"),
     "hoeher": dict(f="e^x", action="mac", x0="0", n="4"),
+    "optimierung": dict(f="r^2*pi*h", constraint="R^2 = r^2 + (h/2)^2", eliminate="r^2", var="h",
+                        a="0", b="2R", closed="0", goal="max", action="opt"),
+    "integral": dict(f="x^2", a="1", b="2", n="4", p="3", action="sums"),
 }
 
 
@@ -471,11 +502,15 @@ def calc_derivative(p: dict):
 def calc_curve(p: dict):
     _, f = read_function(p.get("f", ""))
     dom = _domain(p)
-    fn = {"all": ak.curve_discussion, "mono": ak.monotony, "crit": ak.critical_points,
+    fn = {"sketch": None, "all": ak.curve_discussion, "mono": ak.monotony, "crit": ak.critical_points,
           "curv": ak.curvature, "ext": ak.extrema, "infl": ak.inflection_points}
     action = p.get("action", "all")
     if action not in fn:
         raise InputError("Unbekannte Aktion.")
+    if action == "sketch":
+        if dom is not None:
+            raise InputError("Die Kurvendiskussion wie im Unterricht rechnet auf ganz ℝ: Bereich leer lassen.")
+        return ak.curve_sketch(f)
     return fn[action](f, dom)
 
 
@@ -531,9 +566,53 @@ def calc_hoeher(p: dict):
     raise InputError("Unbekannte Aktion.")
 
 
+def calc_optimierung(p: dict):
+    target = (p.get("f") or "").strip()
+    if not target:
+        raise InputError("Bitte die Zielfunktion eingeben, zum Beispiel r^2*pi*h.")
+    var = (p.get("var") or "").strip() or None
+    lo, hi = (p.get("a") or "").strip(), (p.get("b") or "").strip()
+    if bool(lo) != bool(hi):
+        raise InputError("Den Bereich entweder ganz (untere und obere Grenze) oder gar nicht angeben.")
+    con = (p.get("constraint") or "").strip() or None
+    elim = (p.get("eliminate") or "").strip() or None
+    try:
+        return ak.optimize(target, con, elim, var, (lo, hi) if lo else None,
+                           p.get("goal", "max"), p.get("closed") == "1")
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
+
+
+def calc_integral(p: dict):
+    action = p.get("action", "sums")
+    if action == "faulhaber":
+        try:
+            return ak.faulhaber(int(float(p.get("p", ""))))
+        except ValueError:
+            raise InputError("Der Exponent p muss eine ganze Zahl ≥ 0 sein.") from None
+    _, f = read_function(p.get("f", ""))
+    a, b = _val(p, "a", "die untere Grenze a"), _val(p, "b", "die obere Grenze b")
+    if not float(a) < float(b):
+        raise InputError("Für das Integral muss a kleiner als b sein.")
+    if action == "sums":
+        try:
+            n = int(float(p.get("n", "")))
+        except ValueError:
+            raise InputError("Die Anzahl n muss eine ganze Zahl sein.") from None
+        if not 1 <= n <= 400:
+            raise InputError("Die Anzahl n muss zwischen 1 und 400 liegen.")
+        return ak.rectangle_sums(f, a, b, n)
+    if action == "limit":
+        return ak.integral_by_limit(f, a, b)
+    if action == "ftc":
+        return ak.definite_integral(f, a, b)
+    raise InputError("Unbekannte Aktion.")
+
+
 CALC = {"steigung": calc_steigung, "limits": calc_limits,
         "derivative": calc_derivative, "curve": calc_curve,
-        "numerik": calc_numerik, "hoeher": calc_hoeher}
+        "numerik": calc_numerik, "hoeher": calc_hoeher,
+        "optimierung": calc_optimierung, "integral": calc_integral}
 
 
 def calc(page: str, p: dict):
@@ -1515,9 +1594,31 @@ def wolfram_checks_hoeher(appid, p, res, ask=None) -> WolframReport:
     return report
 
 
+def wolfram_checks_optimierung(appid, p, res, ask=None) -> WolframReport:
+    report = WolframReport()
+    report.checks.append(Check("Optimierung", "info", ours=fmt(res.best) if res.best is not None else "—",
+                               note="Für Optimierungsaufgaben mit Parametern gibt es keine automatische "
+                                    "Prüfung; Z′ = 0 lässt sich bei Wolfram|Alpha selbst nachrechnen."))
+    return report
+
+
+def wolfram_checks_integral(appid, p, res, ask=None) -> WolframReport:
+    report = WolframReport()
+    value = getattr(res, "limit", None) if hasattr(res, "limit") else getattr(res, "value", None)
+    if value is None or not hasattr(res, "f"):
+        report.checks.append(Check("Integral", "info", note="Hier gibt es nichts mit Wolfram|Alpha zu vergleichen."))
+        return report
+    q = f"integrate {wolfram_input(res.f)} from {fmt(res.a)} to {fmt(res.b)}"
+    report.url = browser_url(q)
+    ans = _ask(appid, {"i": q}, ask)["i"]
+    check_expr(report, "Bestimmtes Integral", value, ans, label="Integral", query=q)
+    return report
+
+
 WOLFRAM_CHECKS = {"steigung": wolfram_checks_steigung, "limits": wolfram_checks_limits,
                   "derivative": wolfram_checks_derivative, "curve": wolfram_checks_curve,
-                  "numerik": wolfram_checks_numerik, "hoeher": wolfram_checks_hoeher}
+                  "numerik": wolfram_checks_numerik, "hoeher": wolfram_checks_hoeher,
+                  "optimierung": wolfram_checks_optimierung, "integral": wolfram_checks_integral}
 
 
 def run_wolfram_checks(appid: str, page: str, p: dict, result, ask=None) -> WolframReport:
@@ -1542,6 +1643,8 @@ def wolfram_subtitle(page: str) -> str:
                    "Ableitung mit Wolfram|Alpha.",
         "hoeher": "Vergleicht das Taylor-Polynom (»Taylor series …«), den kritischen Punkt "
                   "beziehungsweise die Nullstellen mit Wolfram|Alpha.",
+        "optimierung": "Zu dieser Seite gibt es keinen automatischen Vergleich.",
+        "integral": "Vergleicht den Wert des Integrals mit Wolfram|Alpha.",
     }[page]
 
 
@@ -3779,8 +3882,9 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     if ak_anim is None:
         return ("Die Animation (anim.py) ist in diesem Ordner nicht vorhanden. "
                 "Sie ist freiwillig; alles andere funktioniert auch ohne.")
-    if page == "numerik" and p.get("action") not in ("bisect", "newton"):
-        return ("Zu dieser Aufgabe gibt es noch keine Animation — Rechenweg und Zeichnung "
+    if (page in ("optimierung", "integral")
+            or (page == "numerik" and p.get("action") not in ("bisect", "newton"))):
+        return ("Zu dieser Seite gibt es noch keine Animation — Rechenweg und Zeichnung "
                 "zeigen das Ergebnis.")
     if page == "numerik" and {"bisect": "bisection", "newton": "newton"}[p["action"]] != scene:
         return "Diese Animation passt nicht zur gewählten Aufgabe."
@@ -3842,7 +3946,7 @@ HISTORY_LIMIT = 10
 
 class AnalysisPage(QWidget):
     """
-    Gemeinsames Gerüst der sechs Seiten.
+    Gemeinsames Gerüst der acht Seiten.
 
     Links Eingabe (Funktion, Rechnung) und die Prüfung mit Wolfram|Alpha,
     rechts die Ergebniskarte. Die Unterklassen sagen nur, welche Felder es
@@ -4801,7 +4905,83 @@ class HoeherePage(AnalysisPage):
         return f"{p.get('f')} · {tail}"
 
 
-PAGE_CLASSES = [SteigungPage, LimitsPage, DerivativePage, CurvePage, NumerikPage, HoeherePage]
+# ==========================================================================
+# Seite 7: Optimierung (SW7)
+# ==========================================================================
+
+class OptimierungPage(AnalysisPage):
+    KEY = "optimierung"
+    TITLE = "Optimierung"
+    LEDE = ("Zielfunktion aufstellen, mit der Nebenbedingung eine Variable eliminieren, Z′ = 0 lösen "
+            "und mit Z″ prüfen — wie im Unterricht.")
+    ACTIONS = OPT_ACTIONS
+    F_CAPTION = "Zielfunktion Z"
+    F_PLACEHOLDER = "z. B. r^2*pi*h"
+    SEG_PAD = 22
+
+    def update_preview(self):
+        self.set_err("")
+
+    def build_form(self):
+        self.field_row("Nebenbedingung", [("constraint", "z. B. R^2 = r^2 + (h/2)^2")], width=300)
+        self.field_row("Eliminieren", [("eliminate", "z. B. r^2")], width=140)
+        self.field_row("Übrig bleibt", [("var", "z. B. h")], width=100)
+        self.field_row("Bereich", [("a", "von"), ("b", "bis")], width=100)
+        keys = ["max", "min"]
+        self.seg_row("Ziel", ["Maximum", "Minimum"], keys.index(self.p.get("goal", "max")),
+                     lambda i: self.set_param("goal", keys[i]))
+        self.seg_row("Grenzen", ["nicht erreicht", "erreicht"], 1 if self.p.get("closed") == "1" else 0,
+                     lambda i: self.set_param("closed", "1" if i else "0"))
+        self.note_row("Ohne Nebenbedingung hängt Z schon nur von einer Variablen ab. Grossbuchstaben wie R, L "
+                      "sind Parameter. Kritische Stellen ausserhalb des Bereichs werden verworfen.")
+
+    def describe(self) -> str:
+        p = self.result_p or self.p
+        return f"{p.get('f')} · {'Maximum' if p.get('goal') != 'min' else 'Minimum'}"
+
+
+# ==========================================================================
+# Seite 8: Bestimmtes Integral (SW8)
+# ==========================================================================
+
+class IntegralPage(AnalysisPage):
+    KEY = "integral"
+    TITLE = "Integral"
+    LEDE = ("Fläche unter dem Graphen: Rechtecksummen, Grenzwert der Obersumme mit den Faulhaberschen "
+            "Formeln und der Hauptsatz als Ausblick.")
+    ACTIONS = INTEGRAL_ACTIONS
+    SEG_PAD = 14
+
+    def build_form(self):
+        a = self.p.get("action", "sums")
+        if a == "faulhaber":
+            self.field_row("Exponent", [("p", "p")], width=100)
+            self.note_row("Zeigt die Formeln für 1ᵖ + 2ᵖ + … + nᵖ bis zu diesem p (Folie 10).")
+            return
+        self.field_row("Grenzen", [("a", "a"), ("b", "b")], width=100)
+        if a == "sums":
+            self.field_row("Rechtecke n", [("n", "n")], width=100)
+            self.note_row("f muss auf [a, b] monoton sein. Obersumme ≥ Fläche ≥ Untersumme.")
+        elif a == "limit":
+            self.note_row("Nur Polynome, monoton auf [a, b]: Δx = (b − a)/n, xₖ = a + k·Δx.")
+        else:
+            self.note_row("Ausblick (Folie 11): ∫ f dx = F(b) − F(a).")
+
+    def adapt(self):
+        self.f_box.setVisible(self.p.get("action") != "faulhaber")
+        if self.p.get("action") == "faulhaber":
+            self.set_err("")
+
+    def describe(self) -> str:
+        p = self.result_p or self.p
+        if p.get("action") == "faulhaber":
+            return f"Faulhaber p = {p.get('p')}"
+        return f"{p.get('f')} auf [{p.get('a')}, {p.get('b')}] · " + \
+            next((s for k, s, _ in INTEGRAL_ACTIONS if k == p.get("action")), "")
+
+
+PAGE_CLASSES = [SteigungPage, LimitsPage, DerivativePage, CurvePage, NumerikPage, HoeherePage,
+                OptimierungPage, IntegralPage]
 
 
 # ==========================================================================
@@ -4809,7 +4989,7 @@ PAGE_CLASSES = [SteigungPage, LimitsPage, DerivativePage, CurvePage, NumerikPage
 # ==========================================================================
 
 class HelpDialog(QDialog):
-    """Kurze Erklärung der Schreibweise und der sechs Seiten."""
+    """Kurze Erklärung der Schreibweise und der acht Seiten."""
 
     SECTIONS = [
         ("Funktionen eingeben", "x^2 − 3x",

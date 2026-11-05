@@ -1,7 +1,7 @@
 # anakit
 
 Analysis mit nachvollziehbarem Rechenweg, gebaut zum Modul ANA-G der HSLU.
-Deckt die Semesterwochen 1 bis 6 ab:
+Deckt die Semesterwochen 1 bis 8 ab:
 
 | Woche | Thema | Modul |
 |-------|-------|-------|
@@ -11,6 +11,8 @@ Deckt die Semesterwochen 1 bis 6 ab:
 | SW4 | Monotonie, Extrema, Krümmung, Kurvendiskussion | `rechnen/analysis.py` |
 | SW5 | Numerische Mathematik I: Bisektion, Newton, numerisch Differenzieren | `rechnen/numerik.py` |
 | SW6 | Höhere Ableitungen: Sonderfälle, Funktionsüberblick, Taylor/MacLaurin | `rechnen/kurve.py`, `rechnen/reihen.py` |
+| SW7 | Optimierung (Zielfunktion, Nebenbedingung); Kurvendiskussion wie im Unterricht | `rechnen/optimierung.py`, `curve_sketch` in `rechnen/kurve.py` |
+| SW8 | Bestimmtes Integral: Rechtecksummen, Grenzwert der Obersumme, Faulhaber | `rechnen/integration.py` |
 
 ## Installieren
 
@@ -58,7 +60,7 @@ nicht auseinanderlaufen.
 ```
 app/        das Fenster (anakit_qt.py)
 rechnen/    Rechenkern: core, render und je Semesterwoche steigung, limits,
-            derivative, analysis, numerik, kurve, reihen
+            derivative, analysis, numerik, kurve, reihen, optimierung, integration
 grafik/     Zeichnungen (plots) und Animationen (anim)
 aufgaben/   Übungsaufgaben (exercises) und Vorlagen zum Selbstprüfen (uebung)
 docs/       Architektur-Diagramm
@@ -96,6 +98,22 @@ Die Folien zu SW5 und SW6 rechnen keine Beispiele vor: SW5.1 bis SW5.4
 stammen aus den Notebooks der Vorlesung, die übrigen Aufgaben dieser Wochen
 sind eigene Beispiele (im Titel gekennzeichnet) und in `tests/` nachgerechnet.
 
+## Woche 7 und 8
+
+```python
+ak.curve_sketch("-1/6 x^4 + 2/3 x^3 + 2")      # Ablauf wie im Unterricht: Sattelpunkt (0/2), Max (3/13/2), WP (2/14/3)
+ak.optimize("r^2*pi*h", "R^2 = r^2 + (h/2)^2", eliminate="r^2", var="h", domain=(0, "2R"))   # h = 2R/√3
+ak.optimize("(4-x)*(4+2x-x^2)", var="x")       # Holzstück: x = 2 − (2/3)√6
+ak.integral_by_limit("x^2", 1, 2)              # Ō(n) = 7/3 + 3/(2n) + 1/(6n²) → 7/3
+ak.rectangle_sums("x^2", 1, 2, [4, 10, 100])   # Ober-/Untersumme je n
+ak.faulhaber(3)                                # n⁴/4 + n³/2 + n²/4
+```
+
+Die Kurvendiskussion `curve_sketch` folgt den Notizen aus SW7: f′ = 0 ∧ f″ < 0 Maximum,
+f″ > 0 Minimum, f′ = 0 ∧ f″ = 0 ∧ f‴ ≠ 0 Sattelpunkt, f′ ≠ 0 ∧ f″ = 0 ∧ f‴ ≠ 0 Wendepunkt.
+Auf Folie 10 von SW8 stehen x₂ und B(x₁) als 3.3630; richtig ist 3.6330 (Zahlendreher), anakit
+rechnet richtig. Die Datei `DMATH-ALGO-Serie07.pdf` im Ordner Week 7 gehört zu DMAT und wurde nicht verwendet.
+
 ## Die Übungsaufgaben
 
 ```python
@@ -132,11 +150,12 @@ pip install -r requirements.txt  # einmalig
 python3 app/anakit_qt.py
 ```
 
-Sechs Seiten: **Steigung & Tangente**, **Grenzwerte**, **Ableiten**,
-**Kurvendiskussion**, **Numerik** (SW5) und **Höhere Ableitungen** (SW6). Jedes Ergebnis zeigt **Rechenweg**, **Zeichnung** und
+Acht Seiten: **Steigung & Tangente**, **Grenzwerte**, **Ableiten**,
+**Kurvendiskussion** (mit der Aktion »Unterricht«), **Numerik** (SW5), **Höhere Ableitungen** (SW6),
+**Optimierung** (SW7) und **Integral** (SW8). Jedes Ergebnis zeigt **Rechenweg**, **Zeichnung** und
 **Animation**. Die Prüfung über Wolfram|Alpha gibt es auf jeder Seite.
 
-Die Seiten Numerik und Höhere Ableitungen haben noch keine Animation
+Die Seiten Numerik bis Integral haben noch keine Animation
 (Rechenweg und Zeichnung gibt es).
 
 Die Zeichnungen (`plot_*`) sind matplotlib-Figuren, `dark=True` schaltet den

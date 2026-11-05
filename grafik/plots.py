@@ -36,7 +36,7 @@ from ..rechnen.core import fmt, parse, to_callable, x as X_SYMBOL
 __all__ = [
     "plot_function", "plot_secant", "plot_secants_to_tangent", "plot_tangent",
     "plot_derivative", "plot_curve", "plot_limit",
-    "plot_bisection", "plot_newton", "plot_taylor",
+    "plot_bisection", "plot_newton", "plot_taylor", "plot_riemann",
     "has_plotly", "plotly_function", "save_html", "COLORS",
 ]
 
@@ -1558,6 +1558,42 @@ def plot_taylor(f, x0=0, orders=(1, 3, 5), xlim=None, dark=False):
         ax.set_ylim(*yl)
         ax.legend(loc="upper left", frameon=False, fontsize=9, labelcolor=th["fg"])
         _title(ax, th, f"Taylor-Polynome um x₀ = {l0}", "T_n(x) = Σ f⁽ᵏ⁾(x₀)/k! · (x − x₀)ᵏ")
+        return _finish(fig)
+
+
+def plot_riemann(f, a, b, n=8, xlim=None, dark=False):
+    """
+    Rechtecksummen (Folie SW8, Seite 5): oben die Obersumme, unten die Untersumme
+    mit je n Rechtecken unter dem Graphen von f auf [a, b]. f muss auf [a, b] monoton sein.
+    """
+    from ..rechnen.integration import _monotony
+    from ..rechnen.core import parse
+    _m, plt = _plt()
+    th = _theme(dark)
+    fa, fb = float(sp.N(sp.sympify(a))), float(sp.N(sp.sympify(b)))
+    n = int(n)
+    if n < 1 or n > 400:
+        raise ValueError("n muss zwischen 1 und 400 liegen.")
+    sense = _monotony(parse(f), sp.nsimplify(a), sp.nsimplify(b))
+    fn = _Fn(f)
+    span = fb - fa
+    lo, hi = _xlim(xlim, None) or (fa - 0.1 * span, fb + 0.1 * span)
+    edges = np.linspace(fa, fb, n + 1)
+    ys = np.asarray(fn(edges), dtype=float)
+    right, left = ys[1:], ys[:-1]
+    upper, lower = (right, left) if sense > 0 else (left, right)
+    dx = (fb - fa) / n
+    uv, lv = float(np.sum(upper) * dx), float(np.sum(lower) * dx)
+    with plt.rc_context(th["rc"]):
+        fig, axes = plt.subplots(2, 1, figsize=(7.4, 6.6), sharex=True, layout="constrained")
+        sc = _scan(fn, lo, hi)
+        yl = _auto_ylim(sc, include=[0])
+        for ax, h, name, val in ((axes[0], upper, "Obersumme", uv), (axes[1], lower, "Untersumme", lv)):
+            ax.bar(edges[:-1], h, width=dx, align="edge", fc=th["grid"], ec=th["fg"], lw=0.9, zorder=2)
+            _draw(ax, th, sc, th["tan"], lw=2.2, z=4)
+            _style(ax, th, lo, hi, trig=fn.trig, xlabel="x" if ax is axes[1] else "", ylabel="y")
+            ax.set_ylim(*yl)
+            _title(ax, th, f"{name} mit n = {n}: {val:.4f}")
         return _finish(fig)
 
 
