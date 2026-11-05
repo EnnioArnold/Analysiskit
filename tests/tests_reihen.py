@@ -113,7 +113,7 @@ order = ["Definitionsbereich", "Symmetrie", "Nullstellen", "Ableitungen", "Kriti
 idx = [next(i for i, t in enumerate(tt) if t.startswith(o)) for o in order]
 check(idx == sorted(idx), f"Reihenfolge der Schritte wie im Unterricht: {tt}")
 check(any("f'''" in str(it[0]) for st in k.steps for it in st.items), "f''' kommt im Rechenweg vor")
-check([t for t in tt if t.startswith("Prüfung bei")] == ["Prüfung bei x₃ = 0", "Prüfung bei x₄ = 3", "Prüfung bei x₅ = 2"],
+check([t for t in tt if t.startswith("Prüfung bei")] == ["Prüfung bei x₃ = 0", "Prüfung bei x₄ = 3", "Prüfung bei x₃ = 0", "Prüfung bei x₅ = 2"],
       "Nummerierung wie in den Notizen: x₃ SP, x₄ Max, x₅ WP")
 check(k.figure() is not None, "curve_sketch.figure")
 repr(k), k.latex(), k._repr_html_()
