@@ -28,6 +28,10 @@ SW7 und SW8 stützen sich auf die Folien und die Notizen aus dem Unterricht
 (SW7: Kurvendiskussion, MacLaurin/Taylor, Zylinder in Kugel, Holzstück, Zaun an
 der Wand; SW8: Rechtecksummen, Grenzwert der Obersumme, Faulhaber, Hauptsatz als
 Ausblick). Was nicht auf den Folien steht, trägt „(eigenes Beispiel)“ im Titel.
+
+SW9 (Unbestimmtes Integral, Hauptsatz) hat auf den Folien keine ausgerechneten
+Beispiele: alle Aufgaben dieser Woche sind eigene Beispiele und in tests/
+nachgerechnet.
 """
 
 from __future__ import annotations
@@ -543,6 +547,38 @@ _ex("SW8.5", "Rechtecksummen für 1/x auf [1/2, 2] (eigenes Beispiel)",
     "Eigenes Beispiel zur Zeichnung auf Folie 5 (fallende Funktion: die Obersumme nimmt die "
     "linken Randwerte). Funktion und Grenzen sind nach der Zeichnung gewählt, nicht auf der Folie angegeben.")
 
+# -- Semesterwoche 9: Unbestimmtes Integral und Hauptsatz ------------------------
+
+_ex("SW9.1", "Eigenschaften bestimmter Integrale an x² (eigenes Beispiel)",
+    "Additivität, Vorzeichen, gleiche und vertauschte Grenzen für f(x) = x² mit a = 0, b = 3, c = 1 nachrechnen.",
+    {"f": "x^2", "a": "0", "b": "3", "kwargs": {"c": "1"}}, "integral_properties",
+    "Folie 5. ∫₀³ x² = 9, ∫₀¹ = 1/3, ∫₃¹ = 1/3 − 9; vertauscht −9.")
+
+_ex("SW9.2", "Vorzeichenwechsel: sin x auf [0, 2π] (eigenes Beispiel)",
+    "Die Eigenschaften von Folie 5 für f(x) = sin(x) auf [0, 2π] prüfen und erklären, warum das Integral 0 ist.",
+    {"f": "sin(x)", "a": "0", "b": "2*pi"}, "integral_properties",
+    "Folie 5: die Vorzeichenregel gilt nur ohne Vorzeichenwechsel; positive und negative Fläche heben sich auf.")
+
+_ex("SW9.3", "Flächenfunktion von 2x mit zwei unteren Grenzen (eigenes Beispiel)",
+    "Fₐ(x) = ∫ₐˣ 2t dt für a₁ = 0 und a₂ = 1 bestimmen und die Differenz F₁ − F₂ berechnen.",
+    {"f": "2x", "a": "0", "kwargs": {"a2": "1"}}, "area_function",
+    "Folie 7 und 8: F₁ = x², F₂ = x² − 1, F₁ − F₂ = 1 = ∫₀¹ 2t dt, eine Konstante.")
+
+_ex("SW9.4", "Stammfunktion von x² (eigenes Beispiel)",
+    "Eine Stammfunktion von f(x) = x² angeben, die Probe F' = f machen und das unbestimmte Integral aufschreiben.",
+    {"f": "x^2"}, "antiderivative",
+    "Folie 3 und 7: Stammfunktion, Flächenfunktion und unbestimmtes Integral sind synonym; ∫ x² dx = x³/3 + C.")
+
+_ex("SW9.5", "Hauptsatz: ∫ (x³ − 2x) dx von 0 bis 2 (eigenes Beispiel)",
+    "Das Integral ∫₀² (x³ − 2x) dx mit der Stammfunktion berechnen und deuten.",
+    {"f": "x^3-2x", "a": "0", "b": "2"}, "fundamental_theorem",
+    "Folie 11: F = x⁴/4 − x², F(2) − F(0) = 0 − 0 = 0; Fläche über und unter der x-Achse gleich gross.")
+
+_ex("SW9.6", "Hauptsatz: ∫ sin x dx von 0 bis π (eigenes Beispiel)",
+    "Das Integral ∫₀^π sin(x) dx mit der Stammfunktion berechnen.",
+    {"f": "sin(x)", "a": "0", "b": "pi"}, "fundamental_theorem",
+    "Folie 11: F = −cos x, F(π) − F(0) = 1 − (−1) = 2.")
+
 
 # -- Do It Yourself: Verweise ohne Lösung --------------------------------------
 
@@ -663,6 +699,21 @@ _diy("SW8.DIY", [
     "572 (16. Aufl.); Lösungen Seite 787 – 788 (14. Aufl.), 810 – 802 (16. Aufl.)",
 ])
 
+_diy("SW9.DIY", [
+    "Papula Band 1, Kapitel V, Abschnitte 3 – 4 (Unbestimmtes Integral, Hauptsatz) — Seiten 436 – 445 "
+    "(14. Aufl.), 448 – 456 (16. Aufl.)",
+    "Papula Band 1, Kapitel V, Abschnitte 5 und 6 (Berechnung bestimmter Integrale mit dem Hauptsatz) — "
+    "Seiten 446 – 453 (14. Aufl.), 456 – 461 (16. Aufl.)",
+    "Zusatz: Wikipedia-Artikel zum Fundamentalsatz der Analysis und die Hauptsatzkantate "
+    "(Links auf der Folie, Seite 13)",
+], [
+    "Papula Band 1, Kapitel V, zu Abschnitt 1 bis 7: Aufgaben 1 c), 1 d) und 2 c) — Seite 559 (14. Aufl.), "
+    "571 (16. Aufl.); Lösungen Seite 787 (14. Aufl.), 801 (16. Aufl.)",
+    "Papula Band 1, Kapitel V, zu Abschnitt 1 bis 7: Aufgaben 3 c) – 3 e), 6 a), 8) und 10) — "
+    "Seiten 560 – 561 (14. Aufl.), 572 – 573 (16. Aufl.); Lösungen Seiten 787 – 879 (14. Aufl.), "
+    "801 – 803 (16. Aufl.). TODO: »879« steht so auf der Folie, vermutlich ein Tippfehler",
+])
+
 
 # ==========================================================================
 # Zugriff
@@ -767,10 +818,10 @@ class TripleProductResult(Result):
 def _lookup():
     """Alle Verfahren, die als `method` vorkommen dürfen."""
     from ..rechnen import (analysis, derivative, integration, kurve, limits, numerik, optimierung,
-                           reihen, steigung)
+                           reihen, stammfunktion, steigung)
     table = {}
     for mod in (steigung, limits, derivative, analysis, numerik, kurve, reihen, optimierung,
-                integration):
+                integration, stammfunktion):
         for name in dir(mod):
             if not name.startswith("_") and callable(getattr(mod, name)):
                 table[name] = getattr(mod, name)
@@ -817,6 +868,10 @@ _ARGS: dict[str, list[str]] = {
     "integral_by_limit": ["f", "a", "b"],
     "faulhaber": ["p"],
     "definite_integral": ["f", "a", "b"],
+    "integral_properties": ["f", "a", "b"],
+    "area_function": ["f", "a"],
+    "antiderivative": ["f"],
+    "fundamental_theorem": ["f", "a", "b"],
     "triple_product": [],
 }
 
