@@ -35,7 +35,7 @@ FONT_UI = ["Inter", "SF Pro Text", ".AppleSystemUIFont", "Helvetica Neue",
            "Segoe UI Variable Text", "Segoe UI", "DejaVu Sans"]
 FONT_DISPLAY = ["EB Garamond", "Cormorant Garamond", "Georgia", "Times New Roman", "serif"]
 FONT_MONO = ["SF Mono", "Menlo", "Cascadia Mono", "Consolas", "DejaVu Sans Mono"]
-UI_LETTER_SPACING = 101.5       # Prozent: Fliesstext leicht geweitet
+UI_LETTER_SPACING = 100.6       # Prozent: Fliesstext leicht geweitet
 MOTION_MS = (150, 250)          # kurze, sanfte Übergänge
 
 # --- App (Qt): Schlüssel von anakit_qt.T --------------------------------------
