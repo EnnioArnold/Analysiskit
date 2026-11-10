@@ -2,9 +2,9 @@
 """
 anakit — Analysis mit Rechenweg, als Desktop-App im Apple-Stil (Qt).
 
-Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 8). Die App rechnet
+Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 9). Die App rechnet
 mit demselben Paket `anakit` wie das Notebook; sie ist nur eine andere
-Oberfläche dafür. Acht Seiten:
+Oberfläche dafür. Neun Seiten:
 
     Steigung & Tangente   Sekanten, Tangente, Ableitung aus der Definition
     Grenzwerte            Grenzwert, Stetigkeit, Wertetabelle
@@ -14,6 +14,7 @@ Oberfläche dafür. Acht Seiten:
     Höhere Ableitungen    Taylor, MacLaurin, Sonderfälle, Funktionsüberblick
     Optimierung           Zielfunktion, Nebenbedingung, Extremum (SW7)
     Integral              Rechtecksummen, Grenzwert der Obersumme, Faulhaber (SW8)
+    Hauptsatz             Eigenschaften, Flächenfunktion, Stammfunktion, F(b) − F(a) (SW9)
 
 Jede Seite zeigt ihr Ergebnis als Karte mit drei Ansichten: Rechenweg
 (gesetzte Formeln), Zeichnung und Animation. Die Prüfung mit Wolfram|Alpha
@@ -237,7 +238,8 @@ def friendly_error(exc: BaseException) -> str:
 # Jede Seite hat ein Wörterbuch `p` mit den Eingaben als Text; `calc(seite, p)`
 # gibt das anakit-Ergebnis zurück oder wirft einen InputError.
 
-PAGE_KEYS = ("steigung", "limits", "derivative", "curve", "numerik", "hoeher", "optimierung", "integral")
+PAGE_KEYS = ("steigung", "limits", "derivative", "curve", "numerik", "hoeher", "optimierung", "integral",
+             "hauptsatz")
 
 STEIGUNG_METHODS = [("sek12", "Sekante", "Sekante durch die Stellen x₁ und x₂"),
                     ("sekh", "Sekante (h)", "Differenzenquotient an x₀ mit Abstand h"),
@@ -295,6 +297,11 @@ INTEGRAL_ACTIONS = [("sums", "Rechtecksummen", "Unter- und Obersumme mit n Recht
                     ("limit", "Grenzwert", "Grenzwert der Obersumme für n → ∞ (Polynome)"),
                     ("faulhaber", "Faulhaber", "Summe 1ᵖ + 2ᵖ + … + nᵖ als Polynom in n"),
                     ("ftc", "Hauptsatz", "Ausblick: Stammfunktion, F(b) − F(a)")]
+
+HAUPTSATZ_ACTIONS = [("props", "Eigenschaften", "Additivität, Vorzeichen, gleiche und vertauschte Grenzen (Folie 5)"),
+                     ("area", "Flächenfunktion", "Fₐ(x) = ∫ₐˣ f(t) dt, auf Wunsch mit zweiter unterer Grenze (Folie 7/8)"),
+                     ("anti", "Stammfunktion", "Unbestimmtes Integral F(x) + C mit Probe F′ = f (Folie 7)"),
+                     ("ftc", "Hauptsatz", "F′ = f und ∫ₐᵇ f dt = F(b) − F(a) (Folie 10/11)")]
 
 #: Beispiele je Seite: (Name, Eingaben als Wörterbuch). Wer eine Seite
 #: öffnet, kann sie durchklicken — und der Test rechnet jede einzelne.
@@ -379,6 +386,15 @@ EXAMPLES: dict[str, list[tuple[str, dict]]] = {
         ("Hauptsatz x² auf [1, 2]", dict(f="x^2", a="1", b="2", n="4", action="ftc")),
         ("Rechtecksummen 1/x auf [1/2, 2], n = 5 (eigenes Beispiel)", dict(f="1/x", a="1/2", b="2", n="5", action="sums")),
     ],
+    # SW9: eigene Beispiele zum Stoff (die Folien rechnen keine vor)
+    "hauptsatz": [
+        ("Eigenschaften: x² auf [0, 3], c = 1", dict(f="x^2", a="0", b="3", c="1", action="props")),
+        ("Eigenschaften: sin(x) auf [0, 2π]", dict(f="sin(x)", a="0", b="2*pi", c="", action="props")),
+        ("Flächenfunktion von 2x, a = 0 und a₂ = 1", dict(f="2x", a="0", a2="1", action="area")),
+        ("Stammfunktion von x²", dict(f="x^2", action="anti")),
+        ("Hauptsatz: x³ − 2x auf [0, 2]", dict(f="x^3-2x", a="0", b="2", action="ftc")),
+        ("Hauptsatz: sin(x) auf [0, π]", dict(f="sin(x)", a="0", b="pi", action="ftc")),
+    ],
 }
 
 DEFAULTS: dict[str, dict] = {
@@ -394,6 +410,7 @@ DEFAULTS: dict[str, dict] = {
     "optimierung": dict(f="r^2*pi*h", constraint="R^2 = r^2 + (h/2)^2", eliminate="r^2", var="h",
                         a="0", b="2R", closed="0", goal="max", action="opt"),
     "integral": dict(f="x^2", a="1", b="2", n="4", p="3", action="sums"),
+    "hauptsatz": dict(f="x^2", a="1", b="2", c="", a2="", action="ftc"),
 }
 
 
@@ -609,10 +626,38 @@ def calc_integral(p: dict):
     raise InputError("Unbekannte Aktion.")
 
 
+def calc_hauptsatz(p: dict):
+    action = p.get("action", "ftc")
+    _, f = read_function(p.get("f", ""))
+    if action == "anti":
+        run = lambda: ak.antiderivative(f)
+    else:
+        a = _val(p, "a", "die untere Grenze a")
+        if action == "area":
+            a2 = _val(p, "a2", "die zweite untere Grenze a₂") if (p.get("a2") or "").strip() else None
+            run = lambda: ak.area_function(f, a, a2)
+        else:
+            b = _val(p, "b", "die obere Grenze b")
+            if not float(a) < float(b):
+                raise InputError("Für das Integral muss a kleiner als b sein.")
+            if action == "props":
+                c = _val(p, "c", "die Stelle c") if (p.get("c") or "").strip() else None
+                run = lambda: ak.integral_properties(f, a, b, c)
+            elif action == "ftc":
+                run = lambda: ak.fundamental_theorem(f, a, b)
+            else:
+                raise InputError("Unbekannte Aktion.")
+    try:
+        return run()
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
+
+
 CALC = {"steigung": calc_steigung, "limits": calc_limits,
         "derivative": calc_derivative, "curve": calc_curve,
         "numerik": calc_numerik, "hoeher": calc_hoeher,
-        "optimierung": calc_optimierung, "integral": calc_integral}
+        "optimierung": calc_optimierung, "integral": calc_integral,
+        "hauptsatz": calc_hauptsatz}
 
 
 def calc(page: str, p: dict):
@@ -1615,10 +1660,24 @@ def wolfram_checks_integral(appid, p, res, ask=None) -> WolframReport:
     return report
 
 
+def wolfram_checks_hauptsatz(appid, p, res, ask=None) -> WolframReport:
+    report = WolframReport()
+    if not hasattr(res, "value") or not hasattr(res, "a"):
+        report.checks.append(Check("Hauptsatz", "info", note="Hier gibt es nichts mit Wolfram|Alpha zu "
+                                   "vergleichen; nur der Hauptsatz mit Grenzen wird geprüft."))
+        return report
+    q = f"integrate {wolfram_input(res.f)} from {fmt(res.a)} to {fmt(res.b)}"
+    report.url = browser_url(q)
+    ans = _ask(appid, {"i": q}, ask)["i"]
+    check_expr(report, "Bestimmtes Integral", res.value, ans, label="Integral", query=q)
+    return report
+
+
 WOLFRAM_CHECKS = {"steigung": wolfram_checks_steigung, "limits": wolfram_checks_limits,
                   "derivative": wolfram_checks_derivative, "curve": wolfram_checks_curve,
                   "numerik": wolfram_checks_numerik, "hoeher": wolfram_checks_hoeher,
-                  "optimierung": wolfram_checks_optimierung, "integral": wolfram_checks_integral}
+                  "optimierung": wolfram_checks_optimierung, "integral": wolfram_checks_integral,
+                  "hauptsatz": wolfram_checks_hauptsatz}
 
 
 def run_wolfram_checks(appid: str, page: str, p: dict, result, ask=None) -> WolframReport:
@@ -1645,6 +1704,7 @@ def wolfram_subtitle(page: str) -> str:
                   "beziehungsweise die Nullstellen mit Wolfram|Alpha.",
         "optimierung": "Zu dieser Seite gibt es keinen automatischen Vergleich.",
         "integral": "Vergleicht den Wert des Integrals mit Wolfram|Alpha.",
+        "hauptsatz": "Vergleicht ∫ₐᵇ f dt aus dem Hauptsatz mit Wolfram|Alpha.",
     }[page]
 
 
@@ -3882,7 +3942,7 @@ def anim_job_for(page: str, p: dict, result, scene: str, quality: str):
     if ak_anim is None:
         return ("Die Animation (anim.py) ist in diesem Ordner nicht vorhanden. "
                 "Sie ist freiwillig; alles andere funktioniert auch ohne.")
-    if (page in ("optimierung", "integral")
+    if (page in ("optimierung", "integral", "hauptsatz")
             or (page == "numerik" and p.get("action") not in ("bisect", "newton"))):
         return ("Zu dieser Seite gibt es noch keine Animation — Rechenweg und Zeichnung "
                 "zeigen das Ergebnis.")
@@ -3946,7 +4006,7 @@ HISTORY_LIMIT = 10
 
 class AnalysisPage(QWidget):
     """
-    Gemeinsames Gerüst der acht Seiten.
+    Gemeinsames Gerüst der neun Seiten.
 
     Links Eingabe (Funktion, Rechnung) und die Prüfung mit Wolfram|Alpha,
     rechts die Ergebniskarte. Die Unterklassen sagen nur, welche Felder es
@@ -4980,8 +5040,45 @@ class IntegralPage(AnalysisPage):
             next((s for k, s, _ in INTEGRAL_ACTIONS if k == p.get("action")), "")
 
 
+# ==========================================================================
+# Seite 9: Unbestimmtes Integral und Hauptsatz (SW9)
+# ==========================================================================
+
+class HauptsatzPage(AnalysisPage):
+    KEY = "hauptsatz"
+    TITLE = "Hauptsatz"
+    LEDE = ("Stammfunktion, Flächenfunktion und der Hauptsatz der Differential- und Integralrechnung: "
+            "∫ₐᵇ f dt = F(b) − F(a).")
+    ACTIONS = HAUPTSATZ_ACTIONS
+    SEG_PAD = 14
+
+    def build_form(self):
+        a = self.p.get("action", "ftc")
+        if a == "anti":
+            self.note_row("Eine Stammfunktion F mit F′ = f; alle anderen unterscheiden sich um eine Konstante C.")
+        elif a == "area":
+            self.field_row("Untere Grenze", [("a", "a"), ("a2", "a₂")], width=100)
+            self.note_row("Fₐ(x) = ∫ₐˣ f(t) dt. a₂ frei lassen = keine zweite Grenze. Mit a₂ ist F₁ − F₂ = ∫ von a₁ bis a₂ eine Konstante (Folie 8).")
+        elif a == "props":
+            self.field_row("Grenzen", [("a", "a"), ("b", "b"), ("c", "c")], width=100)
+            self.note_row("Folie 5: Additivität, Vorzeichen, identische und vertauschte Grenzen. c frei lassen = Mitte von a und b.")
+        else:
+            self.field_row("Grenzen", [("a", "a"), ("b", "b")], width=100)
+            self.note_row("Folie 10/11: F′ = f, danach ∫ₐᵇ f dt = F(b) − F(a). f muss stetig sein.")
+
+    def adapt(self):
+        pass
+
+    def describe(self) -> str:
+        p = self.result_p or self.p
+        act = next((s for k, s, _ in HAUPTSATZ_ACTIONS if k == p.get("action")), "")
+        if p.get("action") == "anti":
+            return f"{p.get('f')} · {act}"
+        return f"{p.get('f')} ab {p.get('a')} · {act}"
+
+
 PAGE_CLASSES = [SteigungPage, LimitsPage, DerivativePage, CurvePage, NumerikPage, HoeherePage,
-                OptimierungPage, IntegralPage]
+                OptimierungPage, IntegralPage, HauptsatzPage]
 
 
 # ==========================================================================
@@ -4989,7 +5086,7 @@ PAGE_CLASSES = [SteigungPage, LimitsPage, DerivativePage, CurvePage, NumerikPage
 # ==========================================================================
 
 class HelpDialog(QDialog):
-    """Kurze Erklärung der Schreibweise und der acht Seiten."""
+    """Kurze Erklärung der Schreibweise und der neun Seiten."""
 
     SECTIONS = [
         ("Funktionen eingeben", "x^2 − 3x",
