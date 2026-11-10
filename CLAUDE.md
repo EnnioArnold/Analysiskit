@@ -10,6 +10,7 @@ Commits). Rechnen exakt mit SymPy; nur Numerik (SW5) rechnet mit float.
   `curve_sketch` in `kurve.py` ist die Kurvendiskussion wie im Unterricht)
 - `grafik/` `plots.py` (Matplotlib), `anim.py` (Manim/manimgx)
 - `aufgaben/` `exercises.py` (Aufgaben als Daten + `loese`), `uebung.py` (Prüfstände)
+- `grafik/design.py` Gestaltungs-Token (Farben, Radien, Schriften) für App, Plots, Animation
 - `app/anakit_qt.py` das Qt-Fenster, `tests/` ein Skript je Modul, `docs/` Diagramm
 - Der Ordner muss als Paket `anakit` importierbar sein (Elternordner auf `sys.path`,
   heisst der Ordner anders: Symlink `anakit` anlegen). Tests laufen als Skripte.

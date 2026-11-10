@@ -27,7 +27,7 @@ pip install manimgx                  # Animationen, freiwillig (Python 3.13+)
 
 manimgx rendert auf der GPU und schreibt das MP4 ohne ffmpeg. Als Rückfall
 geht Manim CE (`brew install cairo pango pkg-config ffmpeg`, `pip install manim`).
-Die Videos kommen im Swiss-Design: Schwarz/Weiss mit rotem Akzent.
+Die Videos kommen im ruhigen Canvas/Tinte-Look (siehe »Design«); `style="3b1b"` bleibt möglich.
 
 Der Ordner `anakit/` liegt neben deinen Wochen-Ordnern. Aus einem
 Notebook in `Week 3/` heraus:
@@ -159,6 +159,25 @@ def meine_ableitung(f, x):
 
 pruefe_ableitung(meine_ableitung)     # ebenso: vorlage_extrema(), pruefe_extrema()
 ```
+
+## Design
+
+Fenster, Zeichnungen und Videos teilen sich ein Gestaltungssystem, das in
+`grafik/design.py` steht (Farben, Radien, Schriften, Abstände; eine Stelle).
+Vorlage ist eine unabhängige Analyse des ElevenLabs-Designsystems
+(Quelle: getdesign.md, ElevenLabs DESIGN.md), nicht dessen Code oder Assets.
+
+- Heller Off-White-Canvas `#f5f5f5`, warme Tinte `#292524`/`#0c0a09`, weisse Karten mit
+  Haarlinie `#e7e5e4` und 16 px Radius, Pillen-Buttons, Eingaben mit 8 px Radius.
+- Pastell-Orbs (mint, peach, lavender, sky, rose) nur als weiche Atmosphäre hinter
+  Seitenkopf, leeren Zuständen und Videohintergrund, nie als Füllung von Bedienelementen.
+- Bedeutung bleibt unterscheidbar: Tinte = f, Grau = Sekante, Rot = Tangente,
+  Lavendel = f', Grün/Rot = steigend/fallend.
+- Schriften: Inter (Oberfläche), EB Garamond Light als Ersatz für die nicht freie
+  Display-Schrift Waldenburg. Die Schriftdateien liegen nicht im Repo; fehlt eine,
+  greift der Fallback (Systemschrift bzw. Georgia).
+- Hell ist der Hauptmodus; Dunkel nutzt Tinten-Canvas `#0c0a09` mit Karten `#1c1917`.
+- Kurze Einblendungen beim Seitenwechsel (`ANAKIT_ANIMATE=0` schaltet sie ab).
 
 ## Das Fenster
 
