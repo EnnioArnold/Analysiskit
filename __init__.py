@@ -2,10 +2,10 @@
 """
 anakit — Grundlagen der Analysis mit nachvollziehbarem Rechenweg.
 
-Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 8: Sekanten und
+Gebaut zum Modul ANA-G der HSLU (Semesterwochen 1 bis 9: Sekanten und
 Tangenten, Grenzwert und Stetigkeit, Ableitungsregeln, Monotonie und
 Extrema, Numerik, höhere Ableitungen und Taylor, Optimierung, bestimmtes
-Integral). Alles rechnet exakt (SymPy) und zeigt jeden Schritt so, wie er in
+Integral, Stammfunktion und Hauptsatz). Alles rechnet exakt (SymPy) und zeigt jeden Schritt so, wie er in
 der Prüfung auf dem Papier stünde.
 
 Kurzübersicht
@@ -39,6 +39,10 @@ Kurzübersicht
     integral_by_limit("x^2", 1, 2)       # SW8: Grenzwert der Obersumme = 7/3
     rectangle_sums("x^2", 1, 2, 4)       # SW8: Unter- und Obersumme
     faulhaber(2)                         # SW8: Σ k² = n³/3 + n²/2 + n/6
+
+    fundamental_theorem("x^2", 1, 2)     # SW9: F' = f, F(b) − F(a) = 7/3
+    area_function("2x", 0, 1)            # SW9: Fₐ(x) = x², F₁ − F₂ = const.
+    antiderivative("x^2")                # SW9: ∫ f dx = x³/3 + C
 
 Jedes Ergebnis zeigt sich im Notebook von selbst. `.as_decimal()` schaltet
 auf Dezimalzahlen um, `.latex()` liefert den Rechenweg zum Einfügen in eine
@@ -76,7 +80,10 @@ from .rechnen.optimierung import OptimizeResult, optimize
 from .rechnen.integration import (DefiniteIntegralResult, FaulhaberResult,
                     IntegralLimitResult, RectangleSumsResult, definite_integral,
                     faulhaber, integral_by_limit, rectangle_sums)
-from .grafik.plots import (has_plotly, plot_bisection, plot_curve, plot_derivative,
+from .rechnen.stammfunktion import (AntiderivativeResult, AreaFunctionResult,
+                    FundamentalTheoremResult, IntegralPropertiesResult, antiderivative,
+                    area_function, fundamental_theorem, integral_properties)
+from .grafik.plots import (has_plotly, plot_area_function, plot_bisection, plot_curve, plot_derivative,
                     plot_function, plot_limit, plot_newton, plot_riemann, plot_secant,
                     plot_secants_to_tangent, plot_tangent, plot_taylor,
                     plotly_function)
@@ -90,6 +97,7 @@ for _alias, _real in (("core", "rechnen.core"), ("render", "rechnen.render"),
                       ("numerik", "rechnen.numerik"), ("kurve", "rechnen.kurve"),
                       ("reihen", "rechnen.reihen"), ("optimierung", "rechnen.optimierung"),
                       ("integration", "rechnen.integration"),
+                      ("stammfunktion", "rechnen.stammfunktion"),
                       ("plots", "grafik.plots"), ("anim", "grafik.anim"),
                       ("exercises", "aufgaben.exercises"), ("uebung", "aufgaben.uebung")):
     _m = _il.import_module(f"{__name__}.{_real}")
@@ -125,10 +133,12 @@ __all__ = [
     "optimize",
     # SW8 Bestimmtes Integral
     "rectangle_sums", "integral_by_limit", "faulhaber", "definite_integral",
+    # SW9 Unbestimmtes Integral und Hauptsatz
+    "integral_properties", "area_function", "antiderivative", "fundamental_theorem",
     # Zeichnen
     "plot_function", "plot_secant", "plot_secants_to_tangent", "plot_tangent",
     "plot_derivative", "plot_curve", "plot_limit", "plot_bisection", "plot_newton",
-    "plot_taylor", "plot_riemann", "plotly_function", "has_plotly",
+    "plot_taylor", "plot_riemann", "plot_area_function", "plotly_function", "has_plotly",
 ]
 
 
@@ -157,11 +167,13 @@ def info() -> str:
         "  optimize (Zielfunktion, Nebenbedingung, Z' = 0, Test mit Z'')",
         "SW8 Bestimmtes Integral:",
         "  rectangle_sums, integral_by_limit, faulhaber, definite_integral",
+        "SW9 Unbestimmtes Integral und Hauptsatz:",
+        "  integral_properties, area_function, antiderivative, fundamental_theorem",
         "",
         "Zeichnen:",
         "  plot_function, plot_secant, plot_secants_to_tangent, plot_tangent,",
         "  plot_derivative, plot_curve, plot_limit,",
-        "  plot_bisection, plot_newton, plot_taylor, plot_riemann",
+        "  plot_bisection, plot_newton, plot_taylor, plot_riemann, plot_area_function",
         f"  Plotly für Interaktives: {'vorhanden' if has_plotly() else 'fehlt'}",
         "",
         "Jedes Ergebnis kennt .as_decimal(), .as_exact(), .latex(), .show(), .figure().",
