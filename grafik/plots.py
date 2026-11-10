@@ -21,6 +21,7 @@ geschlossene Kreise.
 
 from __future__ import annotations
 
+import logging
 import math
 import re
 import warnings
@@ -47,11 +48,31 @@ _LIGHT = dict(PLOT_LIGHT)
 _DARK = dict(PLOT_DARK)
 
 
+_RESCANNED = []
+# Inter hat nur SemiBold statt Bold; Matplotlib nimmt es, meldet es aber bei jeder Figur.
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
+
+
+def _rescan_fonts() -> bool:
+    """Schriftliste von Matplotlib einmal neu aufbauen (der Cache kennt neue Schriften nicht)."""
+    if _RESCANNED:
+        return False
+    _RESCANNED.append(1)
+    try:
+        from matplotlib import font_manager
+        font_manager.fontManager.__init__()
+        return True
+    except Exception:
+        return False
+
+
 def _font_family() -> list[str]:
     """Inter, falls Matplotlib die Schrift kennt; sonst der DejaVu-Standard."""
     try:
         from matplotlib import font_manager
         names = {f.name for f in font_manager.fontManager.ttflist}
+        if FONT_UI[0] not in names and _rescan_fonts():       # frisch installierte Schrift
+            names = {f.name for f in font_manager.fontManager.ttflist}
     except Exception:
         return ["DejaVu Sans"]
     return [pick_family(FONT_UI, names, "DejaVu Sans"), "DejaVu Sans"]

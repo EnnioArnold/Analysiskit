@@ -4938,7 +4938,7 @@ class CurvePage(AnalysisPage):
     LEDE = ("Monotonie, kritische Punkte, Krümmung, Extrema und Wendepunkte — mit "
             "Vorzeichentabellen und der Zeichnung von f, f′ und f″.")
     ACTIONS = CURVE_ACTIONS
-    SEG_PAD = 14
+    SEG_PAD = 8
 
     def build_form(self):
         self.field_row("Bereich", [("a", "a"), ("b", "b")], width=100)
@@ -5222,12 +5222,15 @@ class HelpDialog(QDialog):
 # Hauptfenster
 # ==========================================================================
 
+NAV_NARROW = 1290          # darunter passt die Seitenleiste nicht mehr neben Hell/Dunkel
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("anakit — Analysis mit Rechenweg")
         self.resize(1320, 900)
-        self.setMinimumSize(1040, 600)
+        self.setMinimumSize(1280, 600)       # links 600 px fest, rechts braucht ~560
         self._build()
         self.toasts = ToastArea(self.centralWidget())
         self.apply_theme()
@@ -5252,6 +5255,12 @@ class MainWindow(QMainWindow):
         self.seg_page = Segmented([cls.TITLE for cls in PAGE_CLASSES], 0, pad=14)
         self.seg_page.changed.connect(self.set_page)
         nav_lay.addWidget(self.seg_page)
+        # Schmales Fenster: die Seitenleiste wird zum Auswahlfeld (siehe resizeEvent).
+        self.nav_menu = Dropdown([cls.TITLE for cls in PAGE_CLASSES], PAGE_CLASSES[0].TITLE)
+        self.nav_menu.setFixedWidth(220)
+        self.nav_menu.picked.connect(lambda t: self.set_page([c.TITLE for c in PAGE_CLASSES].index(t)))
+        self.nav_menu.hide()
+        nav_lay.addWidget(self.nav_menu)
         nav_lay.addStretch(1)
         self.seg_theme = Segmented(["Hell", "Dunkel"], 0)
         self.seg_theme.changed.connect(self.set_theme)
@@ -5347,6 +5356,7 @@ class MainWindow(QMainWindow):
         if changed:
             fade_in(self.stack.currentWidget(), D.MOTION_MS[0])
         self.seg_page.set_value(index)
+        self.nav_menu.set_value(PAGE_CLASSES[index].TITLE)
 
     @property
     def page(self) -> AnalysisPage:
@@ -5370,6 +5380,10 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        if hasattr(self, "nav_menu"):
+            narrow = self.width() < NAV_NARROW
+            self.seg_page.setVisible(not narrow)
+            self.nav_menu.setVisible(narrow)
         if hasattr(self, "toasts"):
             self.toasts.reposition()
 
