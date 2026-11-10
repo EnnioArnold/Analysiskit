@@ -338,7 +338,7 @@ def _clip_line(xa, ya, m, xlim, ylim):
 def _fonts() -> tuple[str | None, str | None]:
     """(UI-Schrift, Display-Schrift): Inter bzw. EB Garamond, wenn da; sonst Fallback/None."""
     if engine() == "manimgx":
-        return "Noto Sans", None                   # bringt manimgx selbst mit
+        return "Inter", "EB Garamond"
     try:
         import manimpango
         have = set(manimpango.list_fonts())
@@ -468,12 +468,14 @@ def _build_scenes():
         def orbs(self):
             """Zwei weiche Pastell-Orbs als Atmosphäre: gestapelte, sehr blasse Kreise."""
             dark = self.th.background.lower() < "#808080"
-            step = 0.007 if dark else 0.017
+            step = 0.0035 if dark else 0.0075
             g = VGroup()
+            if os.environ.get("ANAKIT_NO_ORBS"):
+                return g
             for color, (cx, cy), r in ((ORBS["peach"], (5.2, 2.6), 3.4),
                                        (ORBS["lavender"], (-5.4, -2.9), 3.8)):
-                for k in range(16):
-                    c = Circle(radius=r * (1 - k / 16), stroke_width=0)
+                for k in range(40):
+                    c = Circle(radius=r * (1 - k / 40), stroke_width=0)
                     c.set_fill(color, opacity=step)
                     c.move_to(np.array([cx, cy, 0.0]))
                     g.add(c)

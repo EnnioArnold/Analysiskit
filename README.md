@@ -173,11 +173,14 @@ Vorlage ist eine unabhängige Analyse des ElevenLabs-Designsystems
   Seitenkopf, leeren Zuständen und Videohintergrund, nie als Füllung von Bedienelementen.
 - Bedeutung bleibt unterscheidbar: Tinte = f, Grau = Sekante, Rot = Tangente,
   Lavendel = f', Grün/Rot = steigend/fallend.
-- Schriften: Inter (Oberfläche), EB Garamond Light als Ersatz für die nicht freie
-  Display-Schrift Waldenburg. Die Schriftdateien liegen nicht im Repo; fehlt eine,
-  greift der Fallback (Systemschrift bzw. Georgia).
+- Schriften: Inter (Oberfläche) und EB Garamond Light als Ersatz für die nicht freie
+  Display-Schrift Waldenburg. Die Schriftdateien liegen nicht im Repo; sind sie installiert
+  (z. B. in `~/Library/Fonts`), nutzen App, Plots und manimgx-Videos sie. Fehlt eine,
+  greift der Fallback (Systemschrift bzw. Georgia, bei klassischem Manim Helvetica/Arial).
 - Hell ist der Hauptmodus; Dunkel nutzt Tinten-Canvas `#0c0a09` mit Karten `#1c1917`.
-- Kurze Einblendungen beim Seitenwechsel (`ANAKIT_ANIMATE=0` schaltet sie ab).
+- Kurze Einblendungen beim Seitenwechsel (`ANAKIT_ANIMATE=0` schaltet sie ab). Unter 1290 px
+  Breite wird die Seitenleiste zum Auswahlfeld; Mindestbreite des Fensters 1280 px.
+- Orbs in den Videos: `ANAKIT_NO_ORBS=1` lässt sie weg (rendert etwas schneller).
 
 ## Das Fenster
 
