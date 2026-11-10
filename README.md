@@ -1,7 +1,7 @@
 # anakit
 
 Analysis mit nachvollziehbarem Rechenweg, gebaut zum Modul ANA-G der HSLU.
-Deckt die Semesterwochen 1 bis 8 ab:
+Deckt die Semesterwochen 1 bis 9 ab:
 
 | Woche | Thema | Modul |
 |-------|-------|-------|
@@ -13,6 +13,7 @@ Deckt die Semesterwochen 1 bis 8 ab:
 | SW6 | Höhere Ableitungen: Sonderfälle, Funktionsüberblick, Taylor/MacLaurin | `rechnen/kurve.py`, `rechnen/reihen.py` |
 | SW7 | Optimierung (Zielfunktion, Nebenbedingung); Kurvendiskussion wie im Unterricht | `rechnen/optimierung.py`, `curve_sketch` in `rechnen/kurve.py` |
 | SW8 | Bestimmtes Integral: Rechtecksummen, Grenzwert der Obersumme, Faulhaber | `rechnen/integration.py` |
+| SW9 | Unbestimmtes Integral, Flächenfunktion, Hauptsatz | `rechnen/stammfunktion.py` |
 
 ## Installieren
 
@@ -60,7 +61,7 @@ nicht auseinanderlaufen.
 ```
 app/        das Fenster (anakit_qt.py)
 rechnen/    Rechenkern: core, render und je Semesterwoche steigung, limits,
-            derivative, analysis, numerik, kurve, reihen, optimierung, integration
+            derivative, analysis, numerik, kurve, reihen, optimierung, integration, stammfunktion
 grafik/     Zeichnungen (plots) und Animationen (anim)
 aufgaben/   Übungsaufgaben (exercises) und Vorlagen zum Selbstprüfen (uebung)
 docs/       Architektur-Diagramm
@@ -114,6 +115,25 @@ f″ > 0 Minimum, f′ = 0 ∧ f″ = 0 ∧ f‴ ≠ 0 Sattelpunkt, f′ ≠ 0 �
 Auf Folie 10 von SW8 stehen x₂ und B(x₁) als 3.3630; richtig ist 3.6330 (Zahlendreher), anakit
 rechnet richtig. Die Datei `DMATH-ALGO-Serie07.pdf` im Ordner Week 7 gehört zu DMAT und wurde nicht verwendet.
 
+## Woche 9
+
+```python
+ak.fundamental_theorem("x^2", 1, 2)       # F' = f, dann F(b) − F(a) = 7/3
+ak.area_function("2x", 0, 1)              # F₀ = x², F₁ = x² − 1, Differenz = 1 (const.)
+ak.antiderivative("x^2")                  # ∫ x² dx = x³/3 + C
+ak.integral_properties("x^2", 0, 3, 1)    # Additivität, Vorzeichen, Grenzen vertauschen
+ak.plot_area_function("x^2", 0, 2)        # f mit Fläche und Flächenfunktion F
+```
+
+Die Folien zu SW9 sind kurz und rechnen keine Beispiele vor; alle Aufgaben SW9.1 bis
+SW9.6 sind eigene Beispiele (im Titel gekennzeichnet) und in `tests/` nachgerechnet.
+Die Stammfunktion bestimmt SymPy, Integrationsregeln sind nicht Stoff der Folien. Der Hauptsatz
+verlangt stetiges f: bei einer Polstelle im Intervall meldet anakit das, statt F(b) − F(a) zu rechnen.
+Auf der letzten Folie (Do It Yourself) steht bei den Lösungen »Seiten 787 – 879 (14. Aufl.)«,
+vermutlich ein Tippfehler; anakit gibt es wie gedruckt wieder (`SW9.DIY`).
+Zu SW9 gibt es keine Animation: die Folien zeigen nur Formeln und Herleitungen, und die
+Zeichnung der Flächenfunktion zeigt den Zusammenhang F′ = f bereits.
+
 ## Die Übungsaufgaben
 
 ```python
@@ -150,12 +170,12 @@ pip install -r requirements.txt  # einmalig
 python3 app/anakit_qt.py
 ```
 
-Acht Seiten: **Steigung & Tangente**, **Grenzwerte**, **Ableiten**,
+Neun Seiten: **Steigung & Tangente**, **Grenzwerte**, **Ableiten**,
 **Kurvendiskussion** (mit der Aktion »Unterricht«), **Numerik** (SW5), **Höhere Ableitungen** (SW6),
-**Optimierung** (SW7) und **Integral** (SW8). Jedes Ergebnis zeigt **Rechenweg**, **Zeichnung** und
+**Optimierung** (SW7) **Integral** (SW8) und **Hauptsatz** (SW9). Jedes Ergebnis zeigt **Rechenweg**, **Zeichnung** und
 **Animation**. Die Prüfung über Wolfram|Alpha gibt es auf jeder Seite.
 
-Die Seiten Numerik bis Integral haben noch keine Animation
+Die Seiten Optimierung, Integral und Hauptsatz haben keine Animation
 (Rechenweg und Zeichnung gibt es).
 
 Die Zeichnungen (`plot_*`) sind matplotlib-Figuren, `dark=True` schaltet den
