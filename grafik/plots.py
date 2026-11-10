@@ -36,7 +36,7 @@ from ..rechnen.core import fmt, parse, to_callable, x as X_SYMBOL
 __all__ = [
     "plot_function", "plot_secant", "plot_secants_to_tangent", "plot_tangent",
     "plot_derivative", "plot_curve", "plot_limit",
-    "plot_bisection", "plot_newton", "plot_taylor", "plot_riemann",
+    "plot_bisection", "plot_newton", "plot_taylor", "plot_riemann", "plot_area_function",
     "has_plotly", "plotly_function", "save_html", "COLORS",
 ]
 
@@ -1594,6 +1594,46 @@ def plot_riemann(f, a, b, n=8, xlim=None, dark=False):
             _style(ax, th, lo, hi, trig=fn.trig, xlabel="x" if ax is axes[1] else "", ylabel="y")
             ax.set_ylim(*yl)
             _title(ax, th, f"{name} mit n = {n}: {val:.4f}")
+        return _finish(fig)
+
+
+def plot_area_function(f, a, b=None, xlim=None, dark=False):
+    """
+    Flächenfunktion (Folie SW9, Seite 7): oben f mit der Fläche von a bis b,
+    unten F(x) = ∫ₐˣ f(t) dt mit dem Wert F(b) markiert. b ist die variable
+    rechte Grenze (Standard: a + 2). f braucht eine Stammfunktion.
+    """
+    import sympy as sp
+    from ..rechnen.core import parse, x as _x
+    _m, plt = _plt()
+    th = _theme(dark)
+    expr = parse(f)
+    G = sp.integrate(expr, _x)
+    if G.has(sp.Integral):
+        raise ValueError("Für diese Funktion findet SymPy keine Stammfunktion.")
+    fa = float(sp.N(sp.sympify(a)))
+    fb = fa + 2 if b is None else float(sp.N(sp.sympify(b)))
+    if fb == fa:
+        fb = fa + 2
+    lo_, hi_ = min(fa, fb), max(fa, fb)
+    span = hi_ - lo_
+    fn, Fn = _Fn(expr), _Fn(sp.simplify(G - G.subs(_x, sp.nsimplify(fa))))
+    lo, hi = _xlim(xlim, None) or (lo_ - 0.3 * span, hi_ + 0.3 * span)
+    xs = np.linspace(lo_, hi_, 400)
+    with plt.rc_context(th["rc"]):
+        fig, axes = plt.subplots(2, 1, figsize=(7.4, 6.6), sharex=True, layout="constrained")
+        for ax, g, yl_name in ((axes[0], fn, "f"), (axes[1], Fn, "F")):
+            sc = _scan(g, lo, hi)
+            _draw(ax, th, sc, th["f"] if g is fn else th["tan"], lw=2.2, z=4)
+            _style(ax, th, lo, hi, trig=g.trig, xlabel="x" if ax is axes[1] else "", ylabel="y")
+            ax.set_ylim(*_auto_ylim(sc, include=[0]))
+        axes[0].fill_between(xs, 0, fn(xs), color=th["grid"], zorder=2, lw=0)
+        val = float(Fn(fb))
+        axes[1].plot([fb], [val], "o", color=th["fg"], zorder=6)
+        axes[0].axvline(fb, color=th["muted"], lw=0.9, ls="--", zorder=1)
+        axes[1].axvline(fb, color=th["muted"], lw=0.9, ls="--", zorder=1)
+        _title(axes[0], th, f"f: Fläche von {fa:g} bis {fb:g}")
+        _title(axes[1], th, f"Flächenfunktion F: F({fb:g}) = {val:.4f}")
         return _finish(fig)
 
 
