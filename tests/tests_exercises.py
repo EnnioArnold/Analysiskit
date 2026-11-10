@@ -45,7 +45,7 @@ for key, ex in EXERCISES.items():
     check(ex.title and ex.task, f"{key}: Titel oder Aufgabentext fehlt")
     repr(ex)
     check(isinstance(ex._repr_html_(), str), f"{key}: _repr_html_")
-for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6", "SW7", "SW8"):
+for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6", "SW7", "SW8", "SW9"):
     l = liste(w)
     check(len(l) >= 5, f"{w}: zu wenige Einträge")
     check(all(k.startswith(w + ".") for k in l), f"{w}: fremde Schlüssel")
@@ -55,8 +55,8 @@ check(liste("sw2") == liste("SW2"), "liste() ist nicht gross-/kleinschreibungsfe
 check(len(liste()) == len(EXERCISES), "liste() ohne Woche")
 check(aufgabe("sw1.4") is aufgabe("SW1.4"), "aufgabe() klein geschrieben")
 try:
-    liste("SW9")
-    check(False, "liste('SW9') hätte scheitern müssen")
+    liste("SW10")
+    check(False, "liste('SW10') hätte scheitern müssen")
 except KeyError:
     pass
 
@@ -79,7 +79,8 @@ for k in ("SW1.1", "SW1.3", "SW1.4", "SW1.5a", "SW1.5b", "SW1.6a", "SW1.6b", "SW
           "SW3.7", "SW4.1", "SW4.2", "SW4.3", "SW4.4", "SW4.5", "SW4.6",
           "SW5.1", "SW5.2", "SW5.3", "SW5.4", "SW5.5", "SW6.1", "SW6.2", "SW6.3", "SW6.4",
           "SW6.5", "SW6.6", "SW7.1", "SW7.2", "SW7.3", "SW7.4", "SW7.5", "SW7.6",
-          "SW8.1", "SW8.2", "SW8.3", "SW8.4", "SW8.5"):
+          "SW8.1", "SW8.2", "SW8.3", "SW8.4", "SW8.5",
+          "SW9.1", "SW9.2", "SW9.3", "SW9.4", "SW9.5", "SW9.6"):
     check(k in EXERCISES, f"Pflichtaufgabe {k} fehlt")
 
 # Leseliste
@@ -111,7 +112,7 @@ for key, res in alle.items():
     check(getattr(res, "steps", None), f"{key}: Ergebnis ohne Schritte")
     repr(res)
     check(isinstance(res._repr_html_(), str), f"{key}: Ergebnis _repr_html_")
-for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6", "SW7", "SW8"):
+for w in ("SW1", "SW2", "SW3", "SW4", "SW5", "SW6", "SW7", "SW8", "SW9"):
     check(set(loese_alle(w)) == {k for k in rechen if k.startswith(w + ".")}, f"loese_alle({w})")
 
 # --------------------------------------------------------------------------
@@ -220,6 +221,15 @@ check(gleich(val("SW8.2").upper, sp.Rational(7, 3) + sp.Rational(3, 2) / n_ + sp
 check(gleich(val("SW8.3").formula, n_ ** 4 / 4 + n_ ** 3 / 2 + n_ ** 2 / 4), "SW8.3: Σ k³")
 check(val("SW8.4").value == sp.Rational(7, 3), "SW8.4: 7/3")
 check(val("SW8.5").upper > val("SW8.5").lower, "SW8.5: Ober- > Untersumme")
+# SW9: eigene Beispiele, von Hand nachgerechnet
+v91 = val("SW9.1").values
+check(v91["a→b"] == 9 and v91["a→c"] == sp.Rational(1, 3) and v91["b→c"] == sp.Rational(1, 3) - 9, "SW9.1: Werte")
+check(v91["b→a"] == -9 and v91["a→a"] == 0, "SW9.1: Grenzen vertauscht/gleich")
+check(val("SW9.2").values["a→b"] == 0 and val("SW9.2").sign == 0, "SW9.2: sin auf [0, 2π]")
+r93 = val("SW9.3")
+check(gleich(r93.F, x ** 2) and gleich(r93.F2, x ** 2 - 1) and r93.difference == 1, "SW9.3: F₁ = x², F₂ = x² − 1")
+check(gleich(val("SW9.4").F, x ** 3 / 3), "SW9.4: x³/3")
+check(val("SW9.5").value == 0 and val("SW9.6").value == 2, "SW9.5/9.6: 0 und 2")
 
 
 # --------------------------------------------------------------------------
