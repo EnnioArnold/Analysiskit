@@ -32,6 +32,7 @@ import numpy as np
 import sympy as sp
 
 from ..rechnen.core import fmt, parse, to_callable, x as X_SYMBOL
+from .design import FONT_UI, PLOT_COLORS, PLOT_DARK, PLOT_LIGHT, pick_family
 
 __all__ = [
     "plot_function", "plot_secant", "plot_secants_to_tangent", "plot_tangent",
@@ -40,21 +41,20 @@ __all__ = [
     "has_plotly", "plotly_function", "save_html", "COLORS",
 ]
 
-# Swiss Style wie die App: Schwarz/Weiss, ein Rot, Grautöne für Nebenlinien.
-COLORS = ["#000000", "#666666", "#999999", "#e60000", "#e60000", "#888888"]
+# Farben kommen aus grafik/design.py (eine Stelle für alle Oberflächen).
+COLORS = list(PLOT_COLORS)
+_LIGHT = dict(PLOT_LIGHT)
+_DARK = dict(PLOT_DARK)
 
-_LIGHT = dict(
-    dark=False, bg="#ffffff", fg="#000000", muted="#666666", grid="#e0e0e0",
-    spine="#000000", axis="#333333",
-    f="#000000", d1="#e60000", d2="#888888", sec="#666666", sec2="#333333",
-    tan="#e60000", pt="#000000", pos="#000000", neg="#e60000",
-    hi="#e60000", lo="#000000", sat="#888888", wen="#666666")
-_DARK = dict(
-    dark=True, bg="#000000", fg="#ffffff", muted="#999999", grid="#2a2a2a",
-    spine="#ffffff", axis="#cccccc",
-    f="#ffffff", d1="#ff3333", d2="#999999", sec="#aaaaaa", sec2="#dddddd",
-    tan="#ff3333", pt="#ffffff", pos="#ffffff", neg="#ff3333",
-    hi="#ff3333", lo="#ffffff", sat="#999999", wen="#aaaaaa")
+
+def _font_family() -> list[str]:
+    """Inter, falls Matplotlib die Schrift kennt; sonst der DejaVu-Standard."""
+    try:
+        from matplotlib import font_manager
+        names = {f.name for f in font_manager.fontManager.ttflist}
+    except Exception:
+        return ["DejaVu Sans"]
+    return [pick_family(FONT_UI, names, "DejaVu Sans"), "DejaVu Sans"]
 
 
 def _theme(dark: bool) -> dict:
@@ -64,7 +64,7 @@ def _theme(dark: bool) -> dict:
         "savefig.facecolor": th["bg"], "text.color": th["fg"],
         "axes.labelcolor": th["fg"], "xtick.color": th["axis"],
         "ytick.color": th["axis"], "axes.edgecolor": th["spine"],
-        "font.size": 10.5, "axes.titlesize": 12, "axes.unicode_minus": True,
+        "font.family": _font_family(), "font.size": 10.5, "axes.titlesize": 12, "axes.unicode_minus": True,
         "mathtext.fontset": "dejavusans", "legend.facecolor": th["bg"],
         "legend.edgecolor": th["spine"], "figure.dpi": 100,
         "axes.formatter.use_mathtext": False,
