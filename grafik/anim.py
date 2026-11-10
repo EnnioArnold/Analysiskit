@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Manim-Animationen zur Ableitung (freiwillig).
+Manim-Animationen zur Ableitung (freiwillig). Farben: grafik/design.py.
 
 Drei Szenen:
 
@@ -43,6 +43,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Callable
 
+from .design import ANIM_DARK, ANIM_LIGHT, FONT_DISPLAY, FONT_UI, ORBS, pick_family
+
 # --------------------------------------------------------------------------
 # Auftragsbeschreibung — kennt weder Manim noch Qt
 # --------------------------------------------------------------------------
@@ -73,31 +75,27 @@ _EXPECTED = {"secant_to_tangent": 14, "derivative_graph": 12, "curve_analysis": 
 
 @dataclass
 class Theme:
-    """Farben der Animation: Swiss Style, Schwarz/Weiss mit einem Rot."""
-    background: str = "#ffffff"
-    text: str = "#000000"
-    muted: str = "#666666"
-    grid: str = "#e0e0e0"
-    accent: str = "#000000"        # Funktion f
-    secant: str = "#666666"
-    tangent: str = "#e60000"
-    derivative: str = "#e60000"    # f'
-    good: str = "#000000"          # f' > 0, steigend
-    bad: str = "#e60000"           # f' < 0, fallend
-    curved_left: str = "#999999"   # f'' > 0
-    curved_right: str = "#e60000"  # f'' < 0
-    hi: str = "#e60000"
-    lo: str = "#000000"
-    sat: str = "#999999"
-    wen: str = "#666666"
+    """Farben der Animation; Standard ist der ruhige Canvas/Tinte-Look aus design.py."""
+    background: str = ANIM_LIGHT["background"]
+    text: str = ANIM_LIGHT["text"]
+    muted: str = ANIM_LIGHT["muted"]
+    grid: str = ANIM_LIGHT["grid"]
+    accent: str = ANIM_LIGHT["accent"]              # Funktion f
+    secant: str = ANIM_LIGHT["secant"]
+    tangent: str = ANIM_LIGHT["tangent"]
+    derivative: str = ANIM_LIGHT["derivative"]      # f'
+    good: str = ANIM_LIGHT["good"]                  # f' > 0, steigend
+    bad: str = ANIM_LIGHT["bad"]                    # f' < 0, fallend
+    curved_left: str = ANIM_LIGHT["curved_left"]    # f'' > 0
+    curved_right: str = ANIM_LIGHT["curved_right"]  # f'' < 0
+    hi: str = ANIM_LIGHT["hi"]
+    lo: str = ANIM_LIGHT["lo"]
+    sat: str = ANIM_LIGHT["sat"]
+    wen: str = ANIM_LIGHT["wen"]
 
     @staticmethod
     def dark() -> "Theme":
-        return Theme(background="#000000", text="#ffffff", muted="#999999",
-                     grid="#2a2a2a", accent="#ffffff", secant="#aaaaaa",
-                     tangent="#ff3333", derivative="#ff3333", good="#ffffff",
-                     bad="#ff3333", curved_left="#777777", curved_right="#ff3333",
-                     hi="#ff3333", lo="#ffffff", sat="#777777", wen="#aaaaaa")
+        return Theme(**ANIM_DARK)
 
     @staticmethod
     def b3b1() -> "Theme":
@@ -337,19 +335,22 @@ def _clip_line(xa, ya, m, xlim, ylim):
     return (a, b) if a < b else None
 
 
-def _pick_font() -> str | None:
-    """Eine serifenlose Schrift, die auf dem Rechner da ist (sonst Manims Standard)."""
+def _fonts() -> tuple[str | None, str | None]:
+    """(UI-Schrift, Display-Schrift): Inter bzw. EB Garamond, wenn da; sonst Fallback/None."""
     if engine() == "manimgx":
-        return "Noto Sans"                         # bringt manimgx selbst mit
+        return "Noto Sans", None                   # bringt manimgx selbst mit
     try:
         import manimpango
         have = set(manimpango.list_fonts())
     except Exception:
-        return None
-    for name in ("Inter", "Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"):
-        if name in have:
-            return name
-    return None
+        return None, None
+    ui = pick_family(FONT_UI + ["Helvetica", "Arial"], have, "")
+    display = pick_family(FONT_DISPLAY[:2], have, "")
+    return ui or None, display or None
+
+
+def _pick_font() -> str | None:
+    return _fonts()[0]
 
 
 def _setup(job: AnimationJob):
@@ -461,7 +462,22 @@ def _build_scenes():
             self.camera.background_color = self.th.background
             self.fn, self.xlim = _setup(self.job)
             self.caption_mob = None
-            self.font = _pick_font()
+            self.font, self.display_font = _fonts()
+            self.add(self.orbs())
+
+        def orbs(self):
+            """Zwei weiche Pastell-Orbs als Atmosphäre: gestapelte, sehr blasse Kreise."""
+            dark = self.th.background.lower() < "#808080"
+            step = 0.007 if dark else 0.017
+            g = VGroup()
+            for color, (cx, cy), r in ((ORBS["peach"], (5.2, 2.6), 3.4),
+                                       (ORBS["lavender"], (-5.4, -2.9), 3.8)):
+                for k in range(16):
+                    c = Circle(radius=r * (1 - k / 16), stroke_width=0)
+                    c.set_fill(color, opacity=step)
+                    c.move_to(np.array([cx, cy, 0.0]))
+                    g.add(c)
+            return g
 
         # -- Hilfen ---------------------------------------------------------
         def T(self, text, size=26, color=None, **kw):
@@ -470,7 +486,11 @@ def _build_scenes():
             return Text(text, font_size=size, color=color or self.th.text, **kw)
 
         def headline(self, text):
-            t = self.T(text, 36, weight="BOLD")
+            if self.display_font:           # EB Garamond Light, sonst Inter fett
+                t = Text(text, font_size=42, color=self.th.text, font=self.display_font,
+                         weight="LIGHT")
+            else:
+                t = self.T(text, 36, weight="BOLD")
             t.to_edge(UP, buff=0.3)
             return t
 
@@ -479,9 +499,9 @@ def _build_scenes():
             new = self.T(text, size, color)
             new.to_edge(DOWN, buff=0.28)
             if self.caption_mob is None:
-                self.play(FadeIn(new, shift=UP * 0.15), run_time=0.6)
+                self.play(FadeIn(new, shift=UP * 0.15), run_time=0.8)
             else:
-                self.play(ReplacementTransform(self.caption_mob, new), run_time=0.6)
+                self.play(ReplacementTransform(self.caption_mob, new), run_time=0.8)
             self.caption_mob = new
             if wait:
                 self.wait(wait)
@@ -771,7 +791,7 @@ def _build_scenes():
             flab = self.T("f(x)", 28, th.accent).next_to(fr.p(lo, ylim[1]), DOWN + RIGHT, buff=0.15)
             self.play(FadeIn(flab), run_time=0.4)
 
-            def band(a, b, color, opacity=0.2):
+            def band(a, b, color, opacity=0.13):
                 pa, pb = fr.p(max(a, lo), ylim[0]), fr.p(min(b, hi), ylim[1])
                 r = Polygon(pa, [pb[0], pa[1], 0], pb, [pa[0], pb[1], 0],
                             fill_color=color, fill_opacity=opacity, stroke_width=0)

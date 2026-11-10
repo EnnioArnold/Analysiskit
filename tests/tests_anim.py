@@ -34,10 +34,10 @@ assert j.n == 3 and j.x0 == 0.0 and j.xlim == [-3.0, 3.0]
 assert raises(ValueError, build_job, "taylor", "x^2")
 assert raises(ValueError, build_job, "taylor", "x^2", x0=0, n=11)
 
-# (b) Swiss-Theme
+# (b) Standard-Theme (Canvas/Tinte, siehe design.py)
 t, d = Theme(), Theme.dark()
-assert (t.background, d.background) == ("#ffffff", "#000000")
-assert t.tangent.startswith("#e") and d.tangent.startswith("#ff")
+assert (t.background, d.background) == ("#f5f5f5", "#0c0a09")
+assert t.tangent == "#dc2626" and d.tangent == "#f87171" and t.accent != t.tangent
 assert build_job("derivative_graph", "x^2", dark=True).theme == d
 assert build_job("derivative_graph", "x^2", style="3b1b").theme == Theme.b3b1()
 assert raises(ValueError, build_job, "derivative_graph", "x^2", style="nix")
