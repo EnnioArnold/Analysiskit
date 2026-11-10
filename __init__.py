@@ -98,7 +98,7 @@ for _alias, _real in (("core", "rechnen.core"), ("render", "rechnen.render"),
                       ("reihen", "rechnen.reihen"), ("optimierung", "rechnen.optimierung"),
                       ("integration", "rechnen.integration"),
                       ("stammfunktion", "rechnen.stammfunktion"),
-                      ("plots", "grafik.plots"), ("anim", "grafik.anim"),
+                      ("plots", "grafik.plots"), ("anim", "grafik.anim"), ("design", "grafik.design"),
                       ("exercises", "aufgaben.exercises"), ("uebung", "aufgaben.uebung")):
     _m = _il.import_module(f"{__name__}.{_real}")
     _sys.modules[f"{__name__}.{_alias}"] = _m
